@@ -8,11 +8,11 @@ import plotly.graph_objects as go
 from dash.dependencies import Output, Input
 from datetime import date
 import re
-#howdy
 import json
+from sampleData import AttributeData
 
 
-# sample [push comment
+
 # pd print settings
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
@@ -284,6 +284,12 @@ app.layout = html.Div(
             ),
             className="wrapper",
         ),
+        html.Div(
+            children=dcc.Graph(
+                id="third-chart", config={"displayModeBar": False},
+            ),
+            className="wrapper",
+        ),
     ],
 
     className="background"
@@ -296,6 +302,7 @@ app.layout = html.Div(
      Output("bar-chart", "figure"),
      Output("second-chart", "figure"),
      Output("ma", "figure")],
+    Output("third-chart", "figure"),
     [Input("checklist", "value")])
 def update_bar_chart(options_chosen):
     # make dataframes that the buttons can update according to user requests
@@ -337,15 +344,22 @@ def update_bar_chart(options_chosen):
     ma.update_layout(mapbox_style="open-street-map")
     ma.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
-
-
     checkinsVsDate = px.line(check, x=check.index, title="Products Usage Over Time",
                    y=total_columns, labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"} )
     checkinsVsDate.update_layout(yaxis_title="Number of Checkins")
 
+    a = AttributeData()
+    data2 = a.readInJSONFile("finalBusinessData.json")
+    labels, attributesTrue, attributesFalse = a.createAttributeGraphs(data2, 5, False)
+    attributeCount = go.Figure(data=[
+                            go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
+                            go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
+                            ])
+    attributeCount.update_layout(barmode='group', title='Attributes', yaxis_title="Number of Attributes",
+                                 xaxis_title="Attributes")
 
     # return all the charts/maps
-    return checkinsVsDate, ma, nameVsReviewCount, nameVsStars
+    return checkinsVsDate, ma, nameVsReviewCount, nameVsStars, attributeCount
 
 
 @app.callback(
