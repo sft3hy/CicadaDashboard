@@ -12,7 +12,7 @@ import re
 import json
 
 
-
+# sample [push comment
 # pd print settings
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
@@ -39,8 +39,8 @@ data = pd.read_json("finalBusinessData.json")
 #
 # with open("starsData.json", 'w', encoding="UTF-8") as f:
 #     json.dump(sData, f)
-
-# get smaller table to work with map
+#
+# # get smaller table to work with map
 # with open("finalBusinessData.json", encoding="UTF-8") as f:
 #     mData = json.load(f)
 #
@@ -54,8 +54,8 @@ data = pd.read_json("finalBusinessData.json")
 #
 # with open("mapData.json", 'w', encoding="UTF-8") as f:
 #     json.dump(mData, f)
-
-# get smaller table to work with checkins
+#
+# # get smaller table to work with checkins
 # with open("finalCheckin.json", encoding="UTF-8") as f:
 #     cData = json.load(f)
 #
