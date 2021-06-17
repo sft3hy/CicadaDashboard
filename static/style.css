@@ -1,11 +1,19 @@
 .background {
     background-image: linear-gradient(#CDE6F3, #003D71);
+    height: 1500px;
 }
 
 .logo {
     width: 80px;
     height: 80px;
     margin-top: 12px;
+}
+
+.radioOptions {
+    font-size: 20px;
+    margin-top: 12px;
+    text-align: center;
+    margin-bottom: -10px;
 }
 
 .NRO {
@@ -80,7 +88,7 @@
 }
 
 .menu-title {
-    margin-top: 50px;
+    margin-top: 30px;
     margin-bottom: 12px;
     font-weight: bold;
     color: #003D71;
@@ -89,7 +97,7 @@
 }
 
 .menu {
-    height: 20%;
+    height: 100px;
     width: 80%;
     display: flex;
     justify-content: space-evenly;

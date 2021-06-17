@@ -8,9 +8,9 @@ import plotly.graph_objects as go
 from dash.dependencies import Output, Input
 from datetime import date
 import re
-#howdy
 import json
 
+#hey hey hey
 
 
 # pd print settings
@@ -197,14 +197,6 @@ app.layout = html.Div(
             #         src='https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/344612c2-fb5b-4cea-8846-869ed27fe70a/da6ozar-bc9308b1-01ae-49e7-b497-d7acbfa0f3ce.jpg/v1/fill/w_1024,h_576,q_75,strp/forest_background_by_chantalwut_da6ozar-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NTc2IiwicGF0aCI6IlwvZlwvMzQ0NjEyYzItZmI1Yi00Y2VhLTg4NDYtODY5ZWQyN2ZlNzBhXC9kYTZvemFyLWJjOTMwOGIxLTAxYWUtNDllNy1iNDk3LWQ3YWNiZmEwZjNjZS5qcGciLCJ3aWR0aCI6Ijw9MTAyNCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.6rj3OZCxvz65h1KORRIxnfy9Wy6JqYH9x-j3_2JI_gs',
             #         sizes="small", className="gif", style="background-image",
             #     ),
-                dcc.Dropdown(
-                        id = 'dropdown-to-show_or_hide-element',
-                        options=[
-                            {'label': 'Show element', 'value': 'on'},
-                            {'label': 'Hide element', 'value': 'off'}
-                        ],
-                        value = 'on'
-                    ),
                 html.Img(
                     src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/NRO.svg/1200px-NRO.svg.png',
                     sizes="small", className="NRO", style={"clear": "right", "float": "right"}
@@ -220,20 +212,11 @@ app.layout = html.Div(
             ],
             className="header-title",
         ),
-    html.Div([
-            # Create element to hide/show, in this case an 'Input Component'
-            dcc.Input(
-            id = 'element-to-hide',
-            placeholder = 'something',
-            value = 'Can you see me?',
-            )
-        ], style= {'display': 'block'} # <-- This is the line that will be changed by the dropdown callback
-        ),
         html.Div(
             children=[
                 html.Div(
                     children=[
-                        html.Div(children="Select a Region to view Metrics:", className="menu-title"),
+                        html.Div(children="Select a region and the specific metrics you want to view:", className="menu-title"),
                         dcc.Checklist(
                             id="checklist",
                             options=[
@@ -249,6 +232,21 @@ app.layout = html.Div(
             ],
             className="menu",
         ),
+        html.Div([
+            # Create element to hide/show, in this case an 'Input Component'
+            dcc.RadioItems(
+            id = 'radio',
+            options=[
+                {'label': 'Products Usage Over Time', 'value': 'c'},
+                {'label': 'Map', 'value': 'm'},
+                {'label': 'Products vs. User Ratings', 'value': 'pa'},
+                {'label': 'Products vs. Review Count', 'value': 'pt'},
+            ],
+                className="radioOptions",
+                value="m"
+            )
+        ],  # <-- This is the line that will be changed by the dropdown callback
+        ),
 
         # html.Div([
         #     dcc.DatePickerRange(
@@ -262,19 +260,19 @@ app.layout = html.Div(
         html.Div(children=dcc.Graph(
             id="checkin-dates", config={"displayModeBar": False},
         ),
-            className="wrapper",
+            className="wrapper", style= {'display': 'block'}
         ),
         html.Div(children=dcc.Graph(
             id="bar-chart", config={"displayModeBar": False},
         ),
-            className="wrapper",
+            className="wrapper", style= {'display': 'block'}
         ),
         html.Div(children=[html.Div(
             children=dcc.Graph(
                 id='ma',
                 figure=map,
             ),
-            className="wrapper",
+            className="wrapper", style= {'display': 'block'}
         ),
         ],
         ),
@@ -282,7 +280,7 @@ app.layout = html.Div(
             children=dcc.Graph(
                 id="second-chart", config={"displayModeBar": False},
             ),
-            className="wrapper",
+            className="wrapper", style= {'display': 'block'}
         ),
     ],
 
@@ -293,18 +291,18 @@ app.layout = html.Div(
 # make the web-app responsive (so when you click something, it responds)
 @app.callback(
     [Output("checkin-dates", "figure"),
+     Output("ma", "figure")],
      Output("bar-chart", "figure"),
      Output("second-chart", "figure"),
-     Output("ma", "figure")],
     [Input("checklist", "value")])
-def update_bar_chart(options_chosen):
+def update_bar_chart(state_chosen):
     # make dataframes that the buttons can update according to user requests
-    dff = data[data["state"].isin(options_chosen)]
-    m = mapDF[mapDF["state"].isin(options_chosen)]
-    st = formattedStars[formattedStars["state"].isin(options_chosen)]
+    dff = data[data["state"].isin(state_chosen)]
+    m = mapDF[mapDF["state"].isin(state_chosen)]
+    st = formattedStars[formattedStars["state"].isin(state_chosen)]
 
     total_columns = []
-    for option in options_chosen:
+    for option in state_chosen:
         for col in frequencies.columns:
             if option in col:
                 total_columns.append(col)
@@ -321,6 +319,7 @@ def update_bar_chart(options_chosen):
                       "name": "Product Name",
                       "state": "State"
                   }
+
                   )
     nameVsReviewCount = px.bar(dff, x="review_count", y="name", orientation='h', color="state",
                   title="Products vs. Review Count",
@@ -344,19 +343,54 @@ def update_bar_chart(options_chosen):
     checkinsVsDate.update_layout(yaxis_title="Number of Checkins")
 
 
+
     # return all the charts/maps
     return checkinsVsDate, ma, nameVsReviewCount, nameVsStars
 
 
+
 @app.callback(
-   Output(component_id='element-to-hide', component_property='style'),
-   [Input(component_id='dropdown-to-show_or_hide-element', component_property='value')])
+   Output(component_id='checkin-dates', component_property='style'),
+   [Input(component_id='radio', component_property='value')])
 
 def show_hide_element(visibility_state):
-    if visibility_state == 'on':
+    if visibility_state == 'c':
         return {'display': 'block'}
-    if visibility_state == 'off':
+    else:
         return {'display': 'none'}
+
+@app.callback(
+   Output(component_id='bar-chart', component_property='style'),
+   [Input(component_id='radio', component_property='value')])
+
+def show_hide_element(visibility_state):
+    if visibility_state == 'pt':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(
+   Output(component_id='ma', component_property='style'),
+   [Input(component_id='radio', component_property='value')])
+
+def show_hide_element(visibility_state):
+    if visibility_state == 'm':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(
+   Output(component_id='second-chart', component_property='style'),
+   [Input(component_id='radio', component_property='value')])
+
+def show_hide_element(visibility_state):
+    if visibility_state == 'pa':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+
 # run the app at port 8080
 if __name__ == "__main__":
     application.run(debug=True, port=8080)
