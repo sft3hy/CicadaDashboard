@@ -10,8 +10,6 @@ from datetime import date
 import re
 import json
 
-#hey hey hey
-print("what's up")
 
 
 # pd print settings
@@ -198,6 +196,14 @@ app.layout = html.Div(
             #         src='https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/344612c2-fb5b-4cea-8846-869ed27fe70a/da6ozar-bc9308b1-01ae-49e7-b497-d7acbfa0f3ce.jpg/v1/fill/w_1024,h_576,q_75,strp/forest_background_by_chantalwut_da6ozar-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NTc2IiwicGF0aCI6IlwvZlwvMzQ0NjEyYzItZmI1Yi00Y2VhLTg4NDYtODY5ZWQyN2ZlNzBhXC9kYTZvemFyLWJjOTMwOGIxLTAxYWUtNDllNy1iNDk3LWQ3YWNiZmEwZjNjZS5qcGciLCJ3aWR0aCI6Ijw9MTAyNCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.6rj3OZCxvz65h1KORRIxnfy9Wy6JqYH9x-j3_2JI_gs',
             #         sizes="small", className="gif", style="background-image",
             #     ),
+                dcc.Dropdown(
+                        id = 'dropdown-to-show_or_hide-element',
+                        options=[
+                            {'label': 'Show element', 'value': 'on'},
+                            {'label': 'Hide element', 'value': 'off'}
+                        ],
+                        value = 'on'
+                    ),
                 html.Img(
                     src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/NRO.svg/1200px-NRO.svg.png',
                     sizes="small", className="NRO", style={"clear": "right", "float": "right"}
@@ -212,6 +218,15 @@ app.layout = html.Div(
                 ),
             ],
             className="header-title",
+        ),
+    html.Div([
+            # Create element to hide/show, in this case an 'Input Component'
+            dcc.Input(
+            id = 'element-to-hide',
+            placeholder = 'something',
+            value = 'Can you see me?',
+            )
+        ], style= {'display': 'block'} # <-- This is the line that will be changed by the dropdown callback
         ),
         html.Div(
             children=[
@@ -332,6 +347,15 @@ def update_bar_chart(options_chosen):
     return checkinsVsDate, ma, nameVsReviewCount, nameVsStars
 
 
+@app.callback(
+   Output(component_id='element-to-hide', component_property='style'),
+   [Input(component_id='dropdown-to-show_or_hide-element', component_property='value')])
+
+def show_hide_element(visibility_state):
+    if visibility_state == 'on':
+        return {'display': 'block'}
+    if visibility_state == 'off':
+        return {'display': 'none'}
 # run the app at port 8080
 if __name__ == "__main__":
     application.run(debug=True, port=8080)
