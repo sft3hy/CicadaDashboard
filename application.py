@@ -9,8 +9,8 @@ from dash.dependencies import Output, Input
 from datetime import date
 import re
 import json
+from sampleData import AttributeData
 
-#yo yo
 
 
 # pd print settings
@@ -39,8 +39,8 @@ data = pd.read_json("finalBusinessData.json")
 #
 # with open("starsData.json", 'w', encoding="UTF-8") as f:
 #     json.dump(sData, f)
-
-# get smaller table to work with map
+#
+# # get smaller table to work with map
 # with open("finalBusinessData.json", encoding="UTF-8") as f:
 #     mData = json.load(f)
 #
@@ -54,8 +54,8 @@ data = pd.read_json("finalBusinessData.json")
 #
 # with open("mapData.json", 'w', encoding="UTF-8") as f:
 #     json.dump(mData, f)
-
-# get smaller table to work with checkins
+#
+# # get smaller table to work with checkins
 # with open("finalCheckin.json", encoding="UTF-8") as f:
 #     cData = json.load(f)
 #
@@ -282,6 +282,12 @@ app.layout = html.Div(
             ),
             className="wrapper", style= {'display': 'block'}
         ),
+        html.Div(
+            children=dcc.Graph(
+                id="third-chart", config={"displayModeBar": False},
+            ),
+            className="wrapper",
+        ),
     ],
 
     className="background"
@@ -294,6 +300,7 @@ app.layout = html.Div(
      Output("ma", "figure")],
      Output("bar-chart", "figure"),
      Output("second-chart", "figure"),
+    Output("third-chart", "figure"),
     [Input("checklist", "value")])
 def update_bar_chart(state_chosen):
     # make dataframes that the buttons can update according to user requests
@@ -319,7 +326,6 @@ def update_bar_chart(state_chosen):
                       "name": "Product Name",
                       "state": "State"
                   }
-
                   )
     nameVsReviewCount = px.bar(dff, x="review_count", y="name", orientation='h', color="state",
                   title="Products vs. Review Count",
@@ -336,16 +342,23 @@ def update_bar_chart(state_chosen):
     ma.update_layout(mapbox_style="open-street-map")
     ma.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
-
-
     checkinsVsDate = px.line(check, x=check.index, title="Products Usage Over Time",
                    y=total_columns, labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"} )
     checkinsVsDate.update_layout(yaxis_title="Number of Checkins")
 
+    a = AttributeData()
+    data2 = a.readInJSONFile("finalBusinessData.json")
+    labels, attributesTrue, attributesFalse = a.createAttributeGraphs(data2, 5, False)
+    attributeCount = go.Figure(data=[
+                            go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
+                            go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
+                            ])
+    attributeCount.update_layout(barmode='group', title='Attributes', yaxis_title="Number of Attributes",
+                                 xaxis_title="Attributes")
 
 
     # return all the charts/maps
-    return checkinsVsDate, ma, nameVsReviewCount, nameVsStars
+    return checkinsVsDate, ma, nameVsReviewCount, nameVsStars, attributeCount
 
 
 
