@@ -47,7 +47,6 @@ data = pd.read_json("finalBusinessData.json")
 # for business in mData:
 #     del business['address']
 #     del business['city']
-#     del business['review_count']
 #     del business['is_open']
 #     del business['attributes']
 #     del business['postal_code']
@@ -124,6 +123,7 @@ la = mapData.latitude.to_list()
 lo = mapData.longitude.to_list()
 sta = mapData.state.to_list()
 id = mapData.business_id.to_list()
+coun = mapData.review_count.to_list()
 
 i = 0
 namsNStarsList = []
@@ -131,8 +131,8 @@ for n in nams:
     namsNStarsList.append(n + ": " + str(tars[i]) + " Star Average")
     i += 1
 
-mapDF = pd.DataFrame(list(zip(namsNStarsList, la, lo, sta, tars, nams, id)),
-                     columns=['nameNStars', 'latitude', 'longitude', 'state', 'stars', 'name', 'business_id'])
+mapDF = pd.DataFrame(list(zip(namsNStarsList, la, lo, sta, tars, nams, id, coun)),
+                     columns=['nameNStars', 'latitude', 'longitude', 'state', 'stars', 'name', 'business_id', 'review_count'])
 
 # format a table to match check ins to business name using business_id
 checkins = pd.read_json("checkin.json")
@@ -237,15 +237,16 @@ app.layout = html.Div(
             dcc.RadioItems(
             id = 'radio',
             options=[
-                {'label': 'Products Usage Over Time', 'value': 'c'},
+                {'label': 'Product Usage Over Time', 'value': 'c'},
                 {'label': 'Map', 'value': 'm'},
                 {'label': 'Products vs. User Ratings', 'value': 'pa'},
                 {'label': 'Products vs. Review Count', 'value': 'pt'},
+                {'label': 'Summary Statistics', 'value':'s'},
             ],
                 className="radioOptions",
                 value="m"
             )
-        ],  # <-- This is the line that will be changed by the dropdown callback
+        ],
         ),
 
         # html.Div([
@@ -286,7 +287,7 @@ app.layout = html.Div(
             children=dcc.Graph(
                 id="third-chart", config={"displayModeBar": False},
             ),
-            className="wrapper",
+            className="wrapper", style = {'display': 'block'}
         ),
     ],
 
@@ -335,14 +336,15 @@ def update_bar_chart(state_chosen):
                       "state": "State"
                   }
                   )
-    ma = px.scatter_mapbox(m, lat="latitude", lon="longitude", hover_name="name", hover_data=["state", "stars"],
+    ma = px.scatter_mapbox(m, lat="latitude", lon="longitude", hover_name="name", hover_data=["state", "stars", "review_count"],
                             color="stars", zoom=4, height=500, title="Individual Products",labels={
-                            "stars":"Stars", "state":"State"
+                            "stars":"Average Stars", "state":"State", "review_count": "Review Count", "latitude": "Latitude",
+                            "longitude":"Longitude"
         })
     ma.update_layout(mapbox_style="open-street-map")
     ma.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
-    checkinsVsDate = px.line(check, x=check.index, title="Products Usage Over Time",
+    checkinsVsDate = px.line(check, x=check.index, title="Product Usage Over Time",
                    y=total_columns, labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"} )
     checkinsVsDate.update_layout(yaxis_title="Number of Checkins")
 
@@ -353,7 +355,7 @@ def update_bar_chart(state_chosen):
                             go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
                             go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
                             ])
-    attributeCount.update_layout(barmode='group', title='Attributes', yaxis_title="Number of Attributes",
+    attributeCount.update_layout(barmode='group', title='Attributes of 5 Star Restaurants', yaxis_title="Number of Attributes",
                                  xaxis_title="Attributes")
 
 
@@ -398,6 +400,16 @@ def show_hide_element(visibility_state):
 
 def show_hide_element(visibility_state):
     if visibility_state == 'pa':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(
+   Output(component_id='third-chart', component_property='style'),
+   [Input(component_id='radio', component_property='value')])
+
+def show_hide_element(visibility_state):
+    if visibility_state == 's':
         return {'display': 'block'}
     else:
         return {'display': 'none'}
