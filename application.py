@@ -302,7 +302,6 @@ app.layout = html.Div(
             )
         ],
         ),
-
         html.Div([
              # Create element to hide/show, in this case an 'Input Component'
              dbc.Button('Download CSV Report', id='fileButton', n_clicks=0),
