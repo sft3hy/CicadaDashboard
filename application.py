@@ -13,14 +13,14 @@ from sampleData import AttributeData
 
 
 
-# pd print settings1
+# pd print settings
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 
 # reads in the json
 data = pd.read_json("finalBusinessData.json")
 
-# # get smaller table to work with average stars
+# get smaller table to work with average stars
 # with open("finalBusinessData.json", encoding="UTF-8") as f:
 #     sData = json.load(f)
 #
@@ -149,13 +149,27 @@ finalCheckins = finalCheckins.groupby(['state_x', 'name_x'])['date'].apply(', '.
 datesList = finalCheckins.date.to_list()
 
 overallDates = []
+lastThreeWeeks = []
+lastThreeMonths = []
+startOfLastMonths = "2020-11-01"
+startOfLastWeeks = "2021-01-05"
+endDate = "2021-01-29"
 for l in datesList:
     tempList = l.replace(' ', '').split(',')
-    dateList = []
+    allTimeList = []
+    dayList = []
+    lastThreeMonthList = []
     for date in tempList:
+        date = date[0:10]
+        if date > startOfLastWeeks < endDate :
+            dayList.append(date)
+        if date > startOfLastMonths < endDate:
+            lastThreeMonthList.append(date)
         date = date[0:7]
-        dateList.append(date)
-    overallDates.append(dateList)
+        allTimeList.append(date)
+    overallDates.append(allTimeList)
+    lastThreeWeeks.append(dayList)
+    lastThreeMonths.append(lastThreeMonthList)
 
 frequencyList = []
 for line in overallDates:
@@ -185,8 +199,48 @@ for k in range(len(na)):
 
 
 frequencies = frequencies.rename(columns=mapper)
-
 frequencies = frequencies.sort_index()
+
+
+#
+dayFrequencyList = []
+for line in lastThreeWeeks:
+    dictionary = {}
+    for date in line:
+        if date in dictionary:
+            dictionary[date] += 1
+        else:
+            dictionary[date] = 1
+    dayFrequencyList.append(dictionary)
+
+dayFrequencies = pd.DataFrame(dayFrequencyList)
+dayFrequencies = dayFrequencies.transpose()
+
+dayFrequencies = dayFrequencies.rename(columns=mapper)
+dayFrequencies = dayFrequencies.sort_index()
+
+dayFrequencies = dayFrequencies.fillna(0)
+#
+
+#
+monthFrequencyList = []
+for line in lastThreeMonths:
+    dictionary = {}
+    for date in line:
+        if date in dictionary:
+            dictionary[date] += 1
+        else:
+            dictionary[date] = 1
+    monthFrequencyList.append(dictionary)
+
+monthFrequencies = pd.DataFrame(monthFrequencyList)
+monthFrequencies = monthFrequencies.transpose()
+
+monthFrequencies = monthFrequencies.rename(columns=mapper)
+monthFrequencies = monthFrequencies.sort_index()
+
+monthFrequencies = monthFrequencies.fillna(0)
+#
 
 # the main meat of the display, all in this weird html/python hybrid (it's how dash works)
 app.layout = html.Div(
@@ -201,9 +255,8 @@ app.layout = html.Div(
                     src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/NRO.svg/1200px-NRO.svg.png',
                     sizes="small", className="NRO", style={"clear": "right", "float": "right"}
                 ),
-                html.Img(src='https://i.giphy.com/media/KAGO5fYDEnJ3VFqtWN/200w.gif', className='gif'
+                html.Img(src="static/logo.png", className='gif'
                          , style={"clear": "left", "float": "left"}),
-                html.Img(src="static/logo.png", className="logo",style={'textAlign': 'center'}),
                 html.P(children="CICADA", className="header-title"),
                 html.H6(
                     children="Continuous Intelligence Compilation and Data Analytics",
@@ -241,20 +294,13 @@ app.layout = html.Div(
                 {'label': 'Map', 'value': 'm'},
                 {'label': 'Products vs. User Ratings', 'value': 'pa'},
                 {'label': 'Products vs. Review Count', 'value': 'pt'},
-                {'label': 'Summary Statistics', 'value': 's'},
+                {'label': 'Summary Statistics', 'value':'s'},
             ],
                 className="radioOptions",
                 value="m"
             )
         ],
         ),
-
-        html.Div([
-            # Create element to hide/show, in this case an 'Input Component'
-            dbc.Button('Download CSV Report', id='fileButton', n_clicks=0),
-            html.Span(id='outputReport'),
-            dcc.Download(id='download-csv'),
-        ],),
 
         # html.Div([
         #     dcc.DatePickerRange(
@@ -267,6 +313,16 @@ app.layout = html.Div(
         # ]),
         html.Div(children=dcc.Graph(
             id="checkin-dates", config={"displayModeBar": False},
+        ),
+            className="wrapper", style= {'display': 'block'}
+        ),
+        html.Div(children=dcc.Graph(
+            id="checkin-days", config={"displayModeBar": False},
+        ),
+            className="wrapper", style= {'display': 'block'}
+        ),
+        html.Div(children=dcc.Graph(
+            id="checkin-months", config={"displayModeBar": False},
         ),
             className="wrapper", style= {'display': 'block'}
         ),
@@ -290,22 +346,6 @@ app.layout = html.Div(
             ),
             className="wrapper", style= {'display': 'block'}
         ),
-        html.Div([
-            # Create element to hide/show, in this case an 'Input Component'
-            dcc.RadioItems(
-            id = 'numStarsRadio',
-            options=[
-                {'label': '1 Star', 'value': '1'},
-                {'label': '2 Stars', 'value': '2'},
-                {'label': '3 Stars', 'value': '3'},
-                {'label': '4 Stars', 'value': '4'},
-                {'label': '5 Stars', 'value': '5'},
-            ],
-                className="radioOptions",
-                value="5", style={'display': 'block'}
-            )
-        ],
-        ),
         html.Div(
             children=dcc.Graph(
                 id="third-chart", config={"displayModeBar": False},
@@ -324,7 +364,8 @@ app.layout = html.Div(
      Output("ma", "figure")],
      Output("bar-chart", "figure"),
      Output("second-chart", "figure"),
-    # Output("third-chart", "figure"),
+     Output("checkin-days", "figure"),
+     Output("checkin-months", "figure"),
     [Input("checklist", "value")])
 def update_bar_chart(state_chosen):
     # make dataframes that the buttons can update according to user requests
@@ -340,6 +381,8 @@ def update_bar_chart(state_chosen):
 
 
     check = frequencies[[state for state in total_columns]]
+    dayCheck = dayFrequencies[[state for state in total_columns]]
+    monthCheck = monthFrequencies[[state for state in total_columns]]
 
     # plotly bar charts
     nameVsStars = px.bar(st, x="stars", y="name", orientation='h',
@@ -367,28 +410,49 @@ def update_bar_chart(state_chosen):
     ma.update_layout(mapbox_style="open-street-map")
     ma.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
-    checkinsVsDate = px.line(check, x=check.index, title="Product Usage Over Time",
+    checkinsVsDate = px.line(check, x=check.index, title="Product Usage All Time",
                    y=total_columns, labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"} )
     checkinsVsDate.update_layout(yaxis_title="Number of Checkins")
 
-    # a = AttributeData()
-    # data2 = a.readInJSONFile("finalBusinessData.json")
-    # labels, attributesTrue, attributesFalse = a.createAttributeGraphs(data2, 5, False)
-    # attributeCount = go.Figure(data=[
-    #                         go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
-    #                         go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
-    #                         ])
-    # attributeCount.update_layout(barmode='group', title='Attributes of 5 Star Restaurants', yaxis_title="Number of Attributes",
-    #                              xaxis_title="Attributes")
+    checkinsVsDay = px.line(dayCheck, x=dayCheck.index, title="Product Usage Last Three Weeks",
+                             y=total_columns,
+                             labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
+    checkinsVsDay.update_layout(yaxis_title="Number of Checkins")
+
+    checkinsVsMonth = px.line(monthCheck, x=monthCheck.index, title="Product Usage Last Three Months",
+                            y=total_columns,
+                            labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
+    checkinsVsMonth.update_layout(yaxis_title="Number of Checkins")
+
 
 
     # return all the charts/maps
-    return checkinsVsDate, ma, nameVsReviewCount, nameVsStars#, attributeCount
+    return checkinsVsDate, ma, nameVsReviewCount, nameVsStars, checkinsVsMonth, checkinsVsDay
 
 
 
 @app.callback(
    Output(component_id='checkin-dates', component_property='style'),
+   [Input(component_id='radio', component_property='value')])
+
+def show_hide_element(visibility_state):
+    if visibility_state == 'c':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(
+   Output(component_id='checkin-days', component_property='style'),
+   [Input(component_id='radio', component_property='value')])
+
+def show_hide_element(visibility_state):
+    if visibility_state == 'c':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(
+   Output(component_id='checkin-months', component_property='style'),
    [Input(component_id='radio', component_property='value')])
 
 def show_hide_element(visibility_state):
@@ -437,56 +501,6 @@ def show_hide_element(visibility_state):
     else:
         return {'display': 'none'}
 
-@app.callback(
-   Output(component_id='numStarsRadio', component_property='style'),
-   [Input(component_id='radio', component_property='value')])
-
-def show_hide_element(visibility_state):
-    if visibility_state == 's':
-        return {'display': 'block'}
-    else:
-        return {'display': 'none'}
-
-
-# Radio buttons for changing stars in attribute graph
-@app.callback(
-   Output('third-chart', 'figure'),
-   [Input('numStarsRadio', 'value'),
-    Input('checklist', 'value')])
-
-def update_attribute_chart(star_chosen, state_chosen):
-    a = AttributeData()
-    a.updateStates(state_chosen)
-    num_stars = 5
-    if star_chosen == '1':
-        num_stars = 1
-    elif star_chosen == '2':
-        num_stars = 2
-    elif star_chosen == '3':
-        num_stars = 3
-    elif star_chosen == '4':
-        num_stars = 4
-    a.updateStar(num_stars)
-    labels, attributesTrue, attributesFalse = a.createAttributeGraphs(False)
-    attributeCount = go.Figure(data=[
-        go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
-        go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
-    ])
-    attributeCount.update_layout(barmode='group', title='Attributes of ' + str(a.getStar()) + ' Star Restaurants',
-                                 yaxis_title="Number of Attributes",
-                                 xaxis_title="Attributes")
-    return attributeCount
-
-
-# download report into csv file
-@app.callback(
-   Output('download-csv', 'data'),
-   Input('fileButton', 'n_clicks'),
-    prevent_initial_call=True)
-
-def downloadFile(n_clicks):
-    df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
-    return dcc.send_data_frame(df.to_csv, 'df.csv')
 
 
 # run the app at port 8080
