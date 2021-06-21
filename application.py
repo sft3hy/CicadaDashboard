@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input
 from datetime import date
 import re
