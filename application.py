@@ -20,7 +20,7 @@ pd.set_option('display.max_rows', None)
 # reads in the json
 data = pd.read_json("finalBusinessData.json")
 
-# get smaller table to work with average stars
+# # get smaller table to work with average stars
 # with open("finalBusinessData.json", encoding="UTF-8") as f:
 #     sData = json.load(f)
 #
@@ -241,7 +241,7 @@ app.layout = html.Div(
                 {'label': 'Map', 'value': 'm'},
                 {'label': 'Products vs. User Ratings', 'value': 'pa'},
                 {'label': 'Products vs. Review Count', 'value': 'pt'},
-                {'label': 'Summary Statistics', 'value':'s'},
+                {'label': 'Summary Statistics', 'value': 's'},
             ],
                 className="radioOptions",
                 value="m"
@@ -283,6 +283,22 @@ app.layout = html.Div(
             ),
             className="wrapper", style= {'display': 'block'}
         ),
+        html.Div([
+            # Create element to hide/show, in this case an 'Input Component'
+            dcc.RadioItems(
+            id = 'numStarsRadio',
+            options=[
+                {'label': '1 Star', 'value': '1'},
+                {'label': '2 Stars', 'value': '2'},
+                {'label': '3 Stars', 'value': '3'},
+                {'label': '4 Stars', 'value': '4'},
+                {'label': '5 Stars', 'value': '5'},
+            ],
+                className="radioOptions",
+                value="5", style={'display': 'block'}
+            )
+        ],
+        ),
         html.Div(
             children=dcc.Graph(
                 id="third-chart", config={"displayModeBar": False},
@@ -301,7 +317,7 @@ app.layout = html.Div(
      Output("ma", "figure")],
      Output("bar-chart", "figure"),
      Output("second-chart", "figure"),
-    Output("third-chart", "figure"),
+    # Output("third-chart", "figure"),
     [Input("checklist", "value")])
 def update_bar_chart(state_chosen):
     # make dataframes that the buttons can update according to user requests
@@ -348,19 +364,19 @@ def update_bar_chart(state_chosen):
                    y=total_columns, labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"} )
     checkinsVsDate.update_layout(yaxis_title="Number of Checkins")
 
-    a = AttributeData()
-    data2 = a.readInJSONFile("finalBusinessData.json")
-    labels, attributesTrue, attributesFalse = a.createAttributeGraphs(data2, 5, False)
-    attributeCount = go.Figure(data=[
-                            go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
-                            go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
-                            ])
-    attributeCount.update_layout(barmode='group', title='Attributes of 5 Star Restaurants', yaxis_title="Number of Attributes",
-                                 xaxis_title="Attributes")
+    # a = AttributeData()
+    # data2 = a.readInJSONFile("finalBusinessData.json")
+    # labels, attributesTrue, attributesFalse = a.createAttributeGraphs(data2, 5, False)
+    # attributeCount = go.Figure(data=[
+    #                         go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
+    #                         go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
+    #                         ])
+    # attributeCount.update_layout(barmode='group', title='Attributes of 5 Star Restaurants', yaxis_title="Number of Attributes",
+    #                              xaxis_title="Attributes")
 
 
     # return all the charts/maps
-    return checkinsVsDate, ma, nameVsReviewCount, nameVsStars, attributeCount
+    return checkinsVsDate, ma, nameVsReviewCount, nameVsStars#, attributeCount
 
 
 
@@ -414,6 +430,45 @@ def show_hide_element(visibility_state):
     else:
         return {'display': 'none'}
 
+@app.callback(
+   Output(component_id='numStarsRadio', component_property='style'),
+   [Input(component_id='radio', component_property='value')])
+
+def show_hide_element(visibility_state):
+    if visibility_state == 's':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+# Radio buttons for changing stars in attribute graph
+@app.callback(
+   Output('third-chart', 'figure'),
+   [Input('numStarsRadio', 'value'),
+    Input('checklist', 'value')])
+
+def update_attribute_chart(star_chosen, state_chosen):
+    a = AttributeData()
+    a.updateStates(state_chosen)
+    num_stars = 5
+    if star_chosen == '1':
+        num_stars = 1
+    elif star_chosen == '2':
+        num_stars = 2
+    elif star_chosen == '3':
+        num_stars = 3
+    elif star_chosen == '4':
+        num_stars = 4
+    a.updateStar(num_stars)
+    labels, attributesTrue, attributesFalse = a.createAttributeGraphs(False)
+    attributeCount = go.Figure(data=[
+        go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
+        go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
+    ])
+    attributeCount.update_layout(barmode='group', title='Attributes of ' + str(a.getStar()) + ' Star Restaurants',
+                                 yaxis_title="Number of Attributes",
+                                 xaxis_title="Attributes")
+    return attributeCount
 
 
 # run the app at port 8080

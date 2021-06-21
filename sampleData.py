@@ -14,12 +14,23 @@ import math
 class AttributeData:
 
     def __init__(self):
-        pass
+        self.star = 5
+        self.data = pd.read_json('finalBusinessData.json')
+        self.states = [state for state in np.sort(self.data.state.unique())]
+
+    def updateStar(self, starNum):
+        self.star = starNum
+
+    def updateStates(self, listOfStates):
+        self.states = listOfStates
+
+    def getStar(self):
+        return self.star
 
     # imports JSON file and returns the data in a data frame
-    def readInJSONFile(self, path):
-        data = pd.read_json(path)
-        return data
+    # def readInJSONFile(self, path):
+    #     data = pd.read_json(path)
+    #     return data
 
 
     # gets random colors for plots 
@@ -279,7 +290,7 @@ class AttributeData:
 
 
     # creates graphs of the attributes for each star rating
-    def createAttributeGraphs(self, data, stars, show):
+    def createAttributeGraphs(self, show):
         labels = []
         attributesTrue = []
         attributesFalse = []
@@ -288,9 +299,9 @@ class AttributeData:
         # fills the dictionary with all the attributes found in 
         # reviews with the star rating passed in or those that round up
         # or down to the star rating passed in
-        for i in data.index:
-            if self.round_up(data.iloc[i]['stars']) == stars:
-                self.getAttributes(data, i, dictionary)
+        for i in self.data.index:
+            if self.round_up(self.data.iloc[i]['stars']) == self.star and self.data.iloc[i]['state'] in self.states:
+                self.getAttributes(self.data, i, dictionary)
         
         # gets rid of irrelevant data and fills arrays needed to plot data
         for key in dictionary:
