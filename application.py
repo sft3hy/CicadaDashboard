@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input
 from datetime import date
 import re
@@ -249,6 +250,13 @@ app.layout = html.Div(
         ],
         ),
 
+        html.Div([
+            # Create element to hide/show, in this case an 'Input Component'
+            dbc.Button('Download CSV Report', id='fileButton', n_clicks=0),
+            html.Span(id='outputReport'),
+            dcc.Download(id='download-csv'),
+        ],),
+
         # html.Div([
         #     dcc.DatePickerRange(
         #         id='my-date-picker-range',
@@ -469,6 +477,17 @@ def update_attribute_chart(star_chosen, state_chosen):
                                  yaxis_title="Number of Attributes",
                                  xaxis_title="Attributes")
     return attributeCount
+
+
+# download report into csv file
+@app.callback(
+   Output('download-csv', 'data'),
+   Input('fileButton', 'n_clicks'),
+    prevent_initial_call=True)
+
+def downloadFile(n_clicks):
+    df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
+    return dcc.send_data_frame(df.to_csv, 'df.csv')
 
 
 # run the app at port 8080
