@@ -14,7 +14,7 @@ from sampleData import AttributeData
 
 
 
-# pd print settings1
+# pd print settings2
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 
