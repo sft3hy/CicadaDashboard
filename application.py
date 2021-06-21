@@ -13,7 +13,7 @@ from sampleData import AttributeData
 
 
 
-# pd print settings
+# pd print settings1
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 
