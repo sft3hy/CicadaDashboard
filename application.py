@@ -6,12 +6,17 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
-from dash.dependencies import Output, Input
+from dash.dependencies import Output, Input, State
 from datetime import date
 import re
 import json
 from sampleData import AttributeData
+import os
 
+
+
+if not os.path.exists("images"):
+    os.mkdir("images")
 
 
 # pd print settings
@@ -67,6 +72,7 @@ data = pd.read_json("finalBusinessData.json")
 # with open("checkin.json", 'w', encoding="UTF-8") as f:
 #     json.dump(cData, f)
 
+attributeGraph = ''
 
 # formatting stuff
 external_stylesheets = [
@@ -447,7 +453,12 @@ def update_bar_chart(state_chosen):
                             labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsMonth.update_layout(yaxis_title="Number of Checkins")
 
-
+    checkinsVsMonth.write_image('images/checkinsVsMonth.pdf')
+    nameVsStars.write_image('images/nameVsStars.pdf')
+    checkinsVsDay.write_image('images/checkinsVsDay.pdf')
+    checkinsVsDate.write_image('images/checkinsVsDate.pdf')
+    ma.write_image('images/ma.pdf')
+    nameVsReviewCount.write_image('images/nameVsReviewCount.pdf')
 
     # return all the charts/maps
     return checkinsVsDate, ma, nameVsReviewCount, nameVsStars, checkinsVsMonth, checkinsVsDay
@@ -514,6 +525,8 @@ def show_hide_element(visibility_state):
     else:
         return {'display': 'none'}
 
+totalClicks = 0
+
 @app.callback(
    Output(component_id='third-chart', component_property='style'),
    [Input(component_id='radio', component_property='value')])
@@ -562,18 +575,37 @@ def update_attribute_chart(star_chosen, state_chosen):
     attributeCount.update_layout(barmode='group', title='Attributes of ' + str(a.getStar()) + ' Star Restaurants',
                                  yaxis_title="Number of Attributes",
                                  xaxis_title="Attributes")
+    attributeCount.write_image('images/AttributeGraph.pdf')
     return attributeCount
 
+# hides download button for map
+@app.callback(
+   Output(component_id='fileButton', component_property='style'),
+   [Input(component_id='radio', component_property='value')])
+
+def show_hide_element(visibility_state):
+    if visibility_state != 'm':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
 
 # download report into csv file
 @app.callback(
    Output('download-csv', 'data'),
-   Input('fileButton', 'n_clicks'),
+   [Input('fileButton', 'n_clicks'),
+    State('radio', 'value')],
     prevent_initial_call=True)
 
-def downloadFile(n_clicks):
-    df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
-    return dcc.send_data_frame(df.to_csv, 'df.csv')
+def downloadFile(n_clicks, visibility_state):
+    if visibility_state == 's':
+        return dcc.send_file('images/AttributeGraph.pdf')
+    elif visibility_state == 'pt':
+        return dcc.send_file('images/nameVsReviewCount.pdf')
+    elif visibility_state == 'pa':
+        return dcc.send_file('images/nameVsStars.pdf')
+    else:
+    #df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
+        return dcc.send_file('images/checkinsVsDate.pdf', 'images/checkinsVsMonth.pdf', 'images/checkinsVsDay.pdf')
 
 
 # run the app at port 8080
