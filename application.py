@@ -13,7 +13,6 @@ import json
 from sampleData import AttributeData
 
 
-
 # pd print settings
 # pd.set_option('display.max_columns', None)
 # pd.set_option('display.max_rows', None)
@@ -303,29 +302,42 @@ app.layout = html.Div(
             ],
             className="radio-group",
         ),
-        # html.Div([
-        #     # Create element to hide/show, in this case an 'Input Component'
-        #     dcc.RadioItems(
-        #     id = 'radio',
-        #     options=[
-        #         {'label': 'Product Usage Over Time', 'value': 'c'},
-        #         {'label': 'Map', 'value': 'm'},
-        #         {'label': 'Products vs. User Ratings', 'value': 'pa'},
-        #         {'label': 'Products vs. Review Count', 'value': 'pt'},
-        #         {'label': 'Summary Statistics', 'value':'s'},
-        #     ],
-        #         className="radioOptions", style={'display': 'block'},
-        #         value="m"
-        #     )
-        # ],
-        # ),
         html.Div([
              # Create element to hide/show, in this case an 'Input Component'
-             dbc.Button('Download CSV Report', id='fileButton', n_clicks=0),
+             dbc.Button('Download CSV Report', id='fileButton', className='fileButton',
+                        n_clicks=0, style={"clear": "right", "float": "right"},),
              html.Span(id='outputReport'),
              dcc.Download(id='download-csv'),
          ],),
 
+
+
+        # html.Div([
+        #     dbc.Button("Product Usage Over Time", id='puot', className="button", value=None),
+        #     html.Span(id="puot-output", style={'display': 'block'}),
+        #
+        #     dbc.Button("Map", id='map', className="button",value=None),
+        #     html.Span(id="map-output", style={'display': 'block'}),
+        #
+        #     dbc.Button("Products vs. User Ratings", id='pur', className="button", value=None),
+        #     html.Span(id="pur-output", style={'display': 'block'}),
+        #
+        #     dbc.Button("Products vs. Review Count", id='prc', className="button", value=None),
+        #     html.Span(id="prc-output", style={'display': 'block'}),
+        #
+        #     dbc.Button("Summary Statistics", id='ss', className="button", value=None),
+        #     html.Span(id="ss-output", style={'display': 'block'}),
+        # ],value="puot"),
+        html.Div(children=dcc.RadioItems(
+                id='checkinToggle',
+                options=[
+                    {'label': 'All Time', 'value': 1},
+                    {'label': 'Three Months', 'value': 2},
+                    {'label': 'Three Weeks', 'value': 3},
+                ],
+                className="radioOptions",
+                value=1, style={'display': 'block'}
+        )),
         html.Div(children=dcc.Graph(
             id="checkin-dates", config={"displayModeBar": False},
         ),
@@ -524,66 +536,6 @@ def display_value(checkinValue, radiosValue):
     else:
         return {'display': 'none'}
 
-@app.callback(
-   Output(component_id='third-chart', component_property='style'),
-   [Input(component_id='radio', component_property='value')])
-
-def show_hide_element(visibility_state):
-    if visibility_state == 's':
-        return {'display': 'block'}
-    else:
-        return {'display': 'none'}
-
-@app.callback(
-   Output(component_id='numStarsRadio', component_property='style'),
-   [Input(component_id='radio', component_property='value')])
-
-def show_hide_element(visibility_state):
-    if visibility_state == 's':
-        return {'display': 'block'}
-    else:
-        return {'display': 'none'}
-
-
-# Radio buttons for changing stars in attribute graph
-@app.callback(
-   Output('third-chart', 'figure'),
-   [Input('numStarsRadio', 'value'),
-    Input('checklist', 'value')])
-
-def update_attribute_chart(star_chosen, state_chosen):
-    a = AttributeData()
-    a.updateStates(state_chosen)
-    num_stars = 5
-    if star_chosen == '1':
-        num_stars = 1
-    elif star_chosen == '2':
-        num_stars = 2
-    elif star_chosen == '3':
-        num_stars = 3
-    elif star_chosen == '4':
-        num_stars = 4
-    a.updateStar(num_stars)
-    labels, attributesTrue, attributesFalse = a.createAttributeGraphs(False)
-    attributeCount = go.Figure(data=[
-        go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
-        go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
-    ])
-    attributeCount.update_layout(barmode='group', title='Attributes of ' + str(a.getStar()) + ' Star Restaurants',
-                                 yaxis_title="Number of Attributes",
-                                 xaxis_title="Attributes")
-    return attributeCount
-
-
-# download report into csv file
-@app.callback(
-   Output('download-csv', 'data'),
-   Input('fileButton', 'n_clicks'),
-    prevent_initial_call=True)
-
-def downloadFile(n_clicks):
-    df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
-    return dcc.send_data_frame(df.to_csv, 'df.csv')
 
 
 # Radio buttons for changing stars in attribute graph
