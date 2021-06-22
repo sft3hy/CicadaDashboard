@@ -308,7 +308,7 @@ app.layout = html.Div(
         ),
         html.Div([
              # Create element to hide/show, in this case an 'Input Component'
-             dbc.Button('Download CSV Report', id='fileButton', className='fileButton',
+             dbc.Button('Download Current Chart', id='fileButton', className='fileButton',
                         n_clicks=0, style={"clear": "right", "float": "right"},),
              html.Span(id='outputReport'),
              dcc.Download(id='nameVsStarsDownload-csv'),
@@ -316,21 +316,6 @@ app.layout = html.Div(
              dcc.Download(id='attributeCountDownload-csv'),
              dcc.Download(id='productUsageDownload-csv'),
          ],),
-        #     dbc.Button("Product Usage Over Time", id='puot', className="button", value=None),
-        #     html.Span(id="puot-output", style={'display': 'block'}),
-        #
-        #     dbc.Button("Map", id='map', className="button",value=None),
-        #     html.Span(id="map-output", style={'display': 'block'}),
-        #
-        #     dbc.Button("Products vs. User Ratings", id='pur', className="button", value=None),
-        #     html.Span(id="pur-output", style={'display': 'block'}),
-        #
-        #     dbc.Button("Products vs. Review Count", id='prc', className="button", value=None),
-        #     html.Span(id="prc-output", style={'display': 'block'}),
-        #
-        #     dbc.Button("Summary Statistics", id='ss', className="button", value=None),
-        #     html.Span(id="ss-output", style={'display': 'block'}),
-        # ],value="puot"),
         html.Div(children=dcc.RadioItems(
                 id='checkinToggle',
                 options=[
@@ -470,7 +455,6 @@ def display_value(value):
 
 @app.callback(Output("bar-chart", "style"), [Input("radios", "value")])
 def display_value(value):
-    print(value)
     if value==4:
         return {'display': 'block'}
     else:
@@ -523,7 +507,7 @@ def display_value(checkinValue, radiosValue):
    Output('nameVsReviewDownload-csv', 'data'),
    [Input("checklist", "value"),
     Input('fileButton', 'n_clicks'),
-    State('radio', 'value')])
+    State('radios', 'value')])
 
 def makeNameVsReviewCount(state_chosen, n_clicks, visibility_state):
     fileButton = dash.callback_context
@@ -562,7 +546,7 @@ def makeMap(state_chosen):
    Output('nameVsStarsDownload-csv', 'data'),
    [Input("checklist", "value"),
     Input('fileButton', 'n_clicks'),
-    State('radio', 'value')])
+    State('radios', 'value')])
 
 def makeNameVsStarsChart(state_chosen, n_clicks, visibility_state):
     fileButton = dash.callback_context
@@ -579,7 +563,7 @@ def makeNameVsStarsChart(state_chosen, n_clicks, visibility_state):
     if visibility_state == 3 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
         nameVsStars.write_image('images/nameVsStars.pdf')
         return nameVsStars, downloadFile(visibility_state)
-    return nameVsStars, dash.no_updat
+    return nameVsStars, dash.no_update
 
 # Radio buttons for changing stars in attribute graph
 @app.callback(
