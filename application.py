@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input
 from datetime import date
 import re
@@ -14,13 +15,13 @@ from sampleData import AttributeData
 
 
 # pd print settings
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', None)
+# pd.set_option('display.max_columns', None)
+# pd.set_option('display.max_rows', None)
 
 # reads in the json
 data = pd.read_json("finalBusinessData.json")
 
-# get smaller table to work with average stars
+# # get smaller table to work with average stars
 # with open("finalBusinessData.json", encoding="UTF-8") as f:
 #     sData = json.load(f)
 #
@@ -68,17 +69,13 @@ data = pd.read_json("finalBusinessData.json")
 
 
 # formatting stuff
-external_stylesheets = [
-    {
-        "href": "https://fonts.googleapis.com/css2?"
-                "family=Lato:wght@400;700&display=swap",
-        "rel": "stylesheet",
-        "href": 'https://codepen.io/chriddyp/pen/bWLwgP.css',
-        "rel": "buttons",
-    },
-]
 # how to run an app with dash/plotly
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets,
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP,
+               {"href": "https://fonts.googleapis.com/css2?"
+                "family=Lato:wght@400;700&display=swap",
+                "rel": "stylesheet",
+                "href": 'https://codepen.io/chriddyp/pen/bWLwgP.css',
+                "rel": "buttons",}],
                 assets_folder="static",
                 assets_url_path="static")
 # ^specify static folder to make CSS work both locally hosted and on AWS
@@ -255,7 +252,7 @@ app.layout = html.Div(
                     src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/NRO.svg/1200px-NRO.svg.png',
                     sizes="small", className="NRO", style={"clear": "right", "float": "right"}
                 ),
-                html.Img(src="static/logo.png", className='gif'
+                html.Img(src="static/logo.png", className='logo'
                          , style={"clear": "left", "float": "left"}),
                 html.P(children="CICADA", className="header-title"),
                 html.H6(
@@ -285,32 +282,63 @@ app.layout = html.Div(
             ],
             className="menu",
         ),
-        html.Div([
-            # Create element to hide/show, in this case an 'Input Component'
-            dcc.RadioItems(
-            id = 'radio',
-            options=[
-                {'label': 'Product Usage Over Time', 'value': 'c'},
-                {'label': 'Map', 'value': 'm'},
-                {'label': 'Products vs. User Ratings', 'value': 'pa'},
-                {'label': 'Products vs. Review Count', 'value': 'pt'},
-                {'label': 'Summary Statistics', 'value':'s'},
+        html.Div(
+            [
+                dbc.RadioItems(
+                    id="radios",
+                    className="toggle-buttons",
+                    labelClassName="btn btn-outline-secondary",
+                    style={"clear": "left", "float": "left"},
+                    labelCheckedClassName="active",
+                    options=[
+                        {"label": "Product Usage Over Time", "value": 1},
+                        {"label": "Map", "value": 2},
+                        {"label": "Products vs. User Ratings", "value": 3},
+                        {"label": "Products vs. Review Count", "value": 4},
+                        {"label": "Summary Statistics", "value": 5},
+                    ],
+                    value=2,
+                ),
+                html.Div(id="output"),
             ],
-                className="radioOptions",
-                value="m"
-            )
-        ],
+            className="radio-group",
         ),
+        html.Div([
+             # Create element to hide/show, in this case an 'Input Component'
+             dbc.Button('Download CSV Report', id='fileButton', className='fileButton',
+                        n_clicks=0, style={"clear": "right", "float": "right"},),
+             html.Span(id='outputReport'),
+             dcc.Download(id='download-csv'),
+         ],),
+
+
 
         # html.Div([
-        #     dcc.DatePickerRange(
-        #         id='my-date-picker-range',
-        #         min_date_allowed=date(2010, 1, 1),
-        #         max_date_allowed=date(2020, 12, 1),
-        #         initial_visible_month=date(2010, 1, 1),
-        #     ),
-        #     html.Div(id='output-container-date-picker-range')
-        # ]),
+        #     dbc.Button("Product Usage Over Time", id='puot', className="button", value=None),
+        #     html.Span(id="puot-output", style={'display': 'block'}),
+        #
+        #     dbc.Button("Map", id='map', className="button",value=None),
+        #     html.Span(id="map-output", style={'display': 'block'}),
+        #
+        #     dbc.Button("Products vs. User Ratings", id='pur', className="button", value=None),
+        #     html.Span(id="pur-output", style={'display': 'block'}),
+        #
+        #     dbc.Button("Products vs. Review Count", id='prc', className="button", value=None),
+        #     html.Span(id="prc-output", style={'display': 'block'}),
+        #
+        #     dbc.Button("Summary Statistics", id='ss', className="button", value=None),
+        #     html.Span(id="ss-output", style={'display': 'block'}),
+        # ],value="puot"),
+        html.Div(children=dcc.RadioItems(
+                id='checkinToggle',
+                options=[
+                    {'label': 'All Time', 'value': 1},
+                    {'label': 'Three Months', 'value': 2},
+                    {'label': 'Three Weeks', 'value': 3},
+                ],
+                className="radioOptions",
+                value=1, style={'display': 'block'}
+        )),
         html.Div(children=dcc.Graph(
             id="checkin-dates", config={"displayModeBar": False},
         ),
@@ -346,6 +374,23 @@ app.layout = html.Div(
             ),
             className="wrapper", style= {'display': 'block'}
         ),
+        html.Div([
+            # Create element to hide/show, in this case an 'Input Component'
+            dcc.RadioItems(
+                id='numStarsRadio',
+                options=[
+                    {'label': '1 Star', 'value': '1'},
+                    {'label': '2 Stars', 'value': '2'},
+                    {'label': '3 Stars', 'value': '3'},
+                    {'label': '4 Stars', 'value': '4'},
+                    {'label': '5 Stars', 'value': '5'},
+                ],
+                className="radioOptions",
+                value="5", style={'display': 'block'}
+            )
+        ],
+        ),
+
         html.Div(
             children=dcc.Graph(
                 id="third-chart", config={"displayModeBar": False},
@@ -429,78 +474,110 @@ def update_bar_chart(state_chosen):
     # return all the charts/maps
     return checkinsVsDate, ma, nameVsReviewCount, nameVsStars, checkinsVsMonth, checkinsVsDay
 
-
-
-@app.callback(
-   Output(component_id='checkin-dates', component_property='style'),
-   [Input(component_id='radio', component_property='value')])
-
-def show_hide_element(visibility_state):
-    if visibility_state == 'c':
+@app.callback(Output("ma", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value==2:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
-@app.callback(
-   Output(component_id='checkin-days', component_property='style'),
-   [Input(component_id='radio', component_property='value')])
-
-def show_hide_element(visibility_state):
-    if visibility_state == 'c':
+@app.callback(Output("second-chart", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value==3:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
-@app.callback(
-   Output(component_id='checkin-months', component_property='style'),
-   [Input(component_id='radio', component_property='value')])
-
-def show_hide_element(visibility_state):
-    if visibility_state == 'c':
+@app.callback(Output("bar-chart", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value==4:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
-@app.callback(
-   Output(component_id='bar-chart', component_property='style'),
-   [Input(component_id='radio', component_property='value')])
-
-def show_hide_element(visibility_state):
-    if visibility_state == 'pt':
+@app.callback(Output("third-chart", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value==5:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
-@app.callback(
-   Output(component_id='ma', component_property='style'),
-   [Input(component_id='radio', component_property='value')])
-
-def show_hide_element(visibility_state):
-    if visibility_state == 'm':
+@app.callback(Output("numStarsRadio", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value==5:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
-@app.callback(
-   Output(component_id='second-chart', component_property='style'),
-   [Input(component_id='radio', component_property='value')])
-
-def show_hide_element(visibility_state):
-    if visibility_state == 'pa':
+@app.callback(Output("checkinToggle", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value==1:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
-@app.callback(
-   Output(component_id='third-chart', component_property='style'),
-   [Input(component_id='radio', component_property='value')])
-
-def show_hide_element(visibility_state):
-    if visibility_state == 's':
+@app.callback(Output("checkin-dates", "style"), [Input("checkinToggle", "value"), Input("radios", "value")])
+def display_value(checkinValue, radiosValue):
+    if checkinValue==1 and radiosValue==1:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
+@app.callback(Output("checkin-months", "style"), [Input("checkinToggle", "value"), Input("radios", "value")])
+def display_value(checkinValue, radiosValue):
+    if checkinValue==2 and radiosValue==1:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(Output("checkin-days", "style"), [Input("checkinToggle", "value"), Input("radios", "value")])
+def display_value(checkinValue, radiosValue):
+    if checkinValue==3 and radiosValue==1:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+
+# Radio buttons for changing stars in attribute graph
+@app.callback(
+   Output('third-chart', 'figure'),
+   [Input('numStarsRadio', 'value'),
+    Input('checklist', 'value')])
+
+def update_attribute_chart(star_chosen, state_chosen):
+    a = AttributeData()
+    a.updateStates(state_chosen)
+    num_stars = 5
+    if star_chosen == '1':
+        num_stars = 1
+    elif star_chosen == '2':
+        num_stars = 2
+    elif star_chosen == '3':
+        num_stars = 3
+    elif star_chosen == '4':
+        num_stars = 4
+    a.updateStar(num_stars)
+    labels, attributesTrue, attributesFalse = a.createAttributeGraphs(False)
+    attributeCount = go.Figure(data=[
+        go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
+        go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
+    ])
+    attributeCount.update_layout(barmode='group', title='Attributes of ' + str(a.getStar()) + ' Star Products',
+                                 yaxis_title="Number of Attributes",
+                                 xaxis_title="Attributes")
+    return attributeCount
+
+
+# download report into csv file
+@app.callback(
+   Output('download-csv', 'data'),
+   Input('fileButton', 'n_clicks'),
+    prevent_initial_call=True)
+
+def downloadFile(n_clicks):
+    df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
+    return dcc.send_data_frame(df.to_csv, 'df.csv')
 
 
 # run the app at port 8080
