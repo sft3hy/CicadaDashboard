@@ -7,7 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input, State
-from datetime import date
+from datetime import date, time
 import re
 import json
 from sampleData import AttributeData
@@ -312,7 +312,10 @@ app.layout = html.Div(
              # Create element to hide/show, in this case an 'Input Component'
              dbc.Button('Download CSV Report', id='fileButton', n_clicks=0),
              html.Span(id='outputReport'),
-             dcc.Download(id='download-csv'),
+             dcc.Download(id='nameVsStarsDownload-csv'),
+             dcc.Download(id='nameVsReviewDownload-csv'),
+             dcc.Download(id='attributeCountDownload-csv'),
+             dcc.Download(id='productUsageDownload-csv'),
          ],),
         # html.Div([
         #     dcc.DatePickerRange(
@@ -390,17 +393,15 @@ app.layout = html.Div(
 # make the web-app responsive (so when you click something, it responds)
 @app.callback(
     [Output("checkin-dates", "figure"),
-     Output("ma", "figure")],
-     Output("bar-chart", "figure"),
-     Output("second-chart", "figure"),
      Output("checkin-days", "figure"),
      Output("checkin-months", "figure"),
-    [Input("checklist", "value")])
-def update_bar_chart(state_chosen):
+     Output('productUsageDownload-csv', 'data')],
+    [Input("checklist", "value"),
+     Input('fileButton', 'n_clicks'),
+     State('radio', 'value')])
+def update_bar_chart(state_chosen, n_clicks, visibility_state):
     # make dataframes that the buttons can update according to user requests
-    dff = data[data["state"].isin(state_chosen)]
-    m = mapDF[mapDF["state"].isin(state_chosen)]
-    st = formattedStars[formattedStars["state"].isin(state_chosen)]
+    fileButton = dash.callback_context
 
     total_columns = []
     for option in state_chosen:
@@ -414,30 +415,6 @@ def update_bar_chart(state_chosen):
     monthCheck = monthFrequencies[[state for state in total_columns]]
 
     # plotly bar charts
-    nameVsStars = px.bar(st, x="stars", y="name", orientation='h',
-                  color="state", barmode='group',
-                  title="Products vs. User Ratings",
-                  labels={
-                      "stars": "Average Stars",
-                      "name": "Product Name",
-                      "state": "State"
-                  }
-                  )
-    nameVsReviewCount = px.bar(dff, x="review_count", y="name", orientation='h', color="state",
-                  title="Products vs. Review Count",
-                  labels={
-                      "review_count": "Review Count",
-                      "name": "Product Name",
-                      "state": "State"
-                  }
-                  )
-    ma = px.scatter_mapbox(m, lat="latitude", lon="longitude", hover_name="name", hover_data=["state", "stars", "review_count"],
-                            color="stars", zoom=4, height=500, title="Individual Products",labels={
-                            "stars":"Average Stars", "state":"State", "review_count": "Review Count", "latitude": "Latitude",
-                            "longitude":"Longitude"
-        })
-    ma.update_layout(mapbox_style="open-street-map")
-    ma.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
 
     checkinsVsDate = px.line(check, x=check.index, title="Product Usage All Time",
                    y=total_columns, labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"} )
@@ -453,15 +430,14 @@ def update_bar_chart(state_chosen):
                             labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsMonth.update_layout(yaxis_title="Number of Checkins")
 
-    checkinsVsMonth.write_image('images/checkinsVsMonth.pdf')
-    nameVsStars.write_image('images/nameVsStars.pdf')
-    checkinsVsDay.write_image('images/checkinsVsDay.pdf')
-    checkinsVsDate.write_image('images/checkinsVsDate.pdf')
-    ma.write_image('images/ma.pdf')
-    nameVsReviewCount.write_image('images/nameVsReviewCount.pdf')
+    if visibility_state == 'c' and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
+        checkinsVsMonth.write_image('images/checkinsVsMonth.pdf')
+        checkinsVsDay.write_image('images/checkinsVsDay.pdf')
+        checkinsVsDate.write_image('images/checkinsVsDate.pdf')
+        return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state)
 
     # return all the charts/maps
-    return checkinsVsDate, ma, nameVsReviewCount, nameVsStars, checkinsVsMonth, checkinsVsDay
+    return checkinsVsDate, checkinsVsMonth, checkinsVsDay, dash.no_update
 
 
 
@@ -495,12 +471,23 @@ def show_hide_element(visibility_state):
     else:
         return {'display': 'none'}
 
+
 @app.callback(
    Output(component_id='bar-chart', component_property='style'),
    [Input(component_id='radio', component_property='value')])
 
 def show_hide_element(visibility_state):
     if visibility_state == 'pt':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(
+   Output(component_id='second-chart', component_property='style'),
+   [Input(component_id='radio', component_property='value')])
+
+def show_hide_element(visibility_state):
+    if visibility_state == 'pa':
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -516,16 +503,68 @@ def show_hide_element(visibility_state):
         return {'display': 'none'}
 
 @app.callback(
-   Output(component_id='second-chart', component_property='style'),
-   [Input(component_id='radio', component_property='value')])
+   Output('bar-chart', 'figure'),
+   Output('nameVsReviewDownload-csv', 'data'),
+   [Input("checklist", "value"),
+    Input('fileButton', 'n_clicks'),
+    State('radio', 'value')])
 
-def show_hide_element(visibility_state):
-    if visibility_state == 'pa':
-        return {'display': 'block'}
-    else:
-        return {'display': 'none'}
+def makeNameVsReviewCount(state_chosen, n_clicks, visibility_state):
+    fileButton = dash.callback_context
+    dff = data[data["state"].isin(state_chosen)]
+    nameVsReviewCount = px.bar(dff, x="review_count", y="name", orientation='h', color="state",
+                               title="Products vs. Review Count",
+                               labels={
+                                   "review_count": "Review Count",
+                                   "name": "Product Name",
+                                   "state": "State"
+                               }
+                               )
+    if visibility_state == 'pt' and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
+        nameVsReviewCount.write_image('images/nameVsReviewCount.pdf')
+        return nameVsReviewCount, downloadFile(visibility_state)
+    return nameVsReviewCount, dash.no_update
 
-totalClicks = 0
+@app.callback(
+   Output('ma', 'figure'),
+   [Input("checklist", "value")])
+
+def makeMap(state_chosen):
+    m = mapDF[mapDF["state"].isin(state_chosen)]
+    ma = px.scatter_mapbox(m, lat="latitude", lon="longitude", hover_name="name",
+                           hover_data=["state", "stars", "review_count"],
+                           color="stars", zoom=4, height=500, title="Individual Products", labels={
+            "stars": "Average Stars", "state": "State", "review_count": "Review Count", "latitude": "Latitude",
+            "longitude": "Longitude"
+        })
+    ma.update_layout(mapbox_style="open-street-map")
+    ma.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    return ma
+
+@app.callback(
+   Output('second-chart', 'figure'),
+   Output('nameVsStarsDownload-csv', 'data'),
+   [Input("checklist", "value"),
+    Input('fileButton', 'n_clicks'),
+    State('radio', 'value')])
+
+def makeNameVsStarsChart(state_chosen, n_clicks, visibility_state):
+    fileButton = dash.callback_context
+    st = formattedStars[formattedStars["state"].isin(state_chosen)]
+    nameVsStars = px.bar(st, x="stars", y="name", orientation='h',
+                         color="state", barmode='group',
+                         title="Products vs. User Ratings",
+                         labels={
+                             "stars": "Average Stars",
+                             "name": "Product Name",
+                             "state": "State"
+                         }
+                         )
+    if visibility_state == 'pa' and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
+        nameVsStars.write_image('images/nameVsStars.pdf')
+        return nameVsStars, downloadFile(visibility_state)
+    return nameVsStars, dash.no_update
+
 
 @app.callback(
    Output(component_id='third-chart', component_property='style'),
@@ -551,10 +590,14 @@ def show_hide_element(visibility_state):
 # Radio buttons for changing stars in attribute graph
 @app.callback(
    Output('third-chart', 'figure'),
+   Output('attributeCountDownload-csv', 'data'),
    [Input('numStarsRadio', 'value'),
-    Input('checklist', 'value')])
+    Input('checklist', 'value'),
+    Input('fileButton', 'n_clicks'),
+    State('radio', 'value')])
 
-def update_attribute_chart(star_chosen, state_chosen):
+def update_attribute_chart(star_chosen, state_chosen, n_clicks, visibility_state):
+    fileButton = dash.callback_context
     a = AttributeData()
     a.updateStates(state_chosen)
     num_stars = 5
@@ -575,8 +618,11 @@ def update_attribute_chart(star_chosen, state_chosen):
     attributeCount.update_layout(barmode='group', title='Attributes of ' + str(a.getStar()) + ' Star Restaurants',
                                  yaxis_title="Number of Attributes",
                                  xaxis_title="Attributes")
-    attributeCount.write_image('images/AttributeGraph.pdf')
-    return attributeCount
+    if visibility_state == 's' and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
+        attributeCount.write_image('images/AttributeGraph.pdf')
+        return attributeCount, downloadFile(visibility_state)
+    # attributeCount.write_image('images/AttributeGraph.pdf')
+    return attributeCount, dash.no_update
 
 # hides download button for map
 @app.callback(
@@ -590,18 +636,21 @@ def show_hide_element(visibility_state):
         return {'display': 'none'}
 
 # download report into csv file
-@app.callback(
-   Output('download-csv', 'data'),
-   [Input('fileButton', 'n_clicks'),
-    State('radio', 'value')],
-    prevent_initial_call=True)
+# @app.callback(
+#    Output('download-csv', 'data'),
+#    [Input('fileButton', 'n_clicks'),
+#     State('radio', 'value')],
+#     prevent_initial_call=True)
 
-def downloadFile(n_clicks, visibility_state):
+def downloadFile(visibility_state):
     if visibility_state == 's':
         return dcc.send_file('images/AttributeGraph.pdf')
     elif visibility_state == 'pt':
         return dcc.send_file('images/nameVsReviewCount.pdf')
     elif visibility_state == 'pa':
+        # fig = copy.deepcopy(nameVsStars)
+        # fig.write_image('images/nameVsStars.pdf')
+        #time.sleep(3)
         return dcc.send_file('images/nameVsStars.pdf')
     else:
     #df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
