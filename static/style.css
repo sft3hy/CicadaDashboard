@@ -1,9 +1,69 @@
 .background {
     background-image: linear-gradient(#CDE6F3, #003D71);
-    height: 2000px;
+    height: 1600px;
     margin-top: -20px;
     margin-left: -20px;
     margin-right: -20px;
+    margin-bottom: -40px;
+}
+
+.fileButton {
+    margin-top: -55px;
+    margin-right: 60px
+}
+
+.radio-group .custom-control-input ~ .custom-control-label::before {
+  content: none;
+  margin-bottom: 10px;
+}
+
+.radio-group .custom-radio .custom-control-input ~ .custom-control-label::after {
+  content: none;
+
+}
+
+/* restyle radio items */
+.radio-group .custom-control {
+  padding-left: 0;
+    padding-right: 2px;
+    text-align: center;
+    margin-bottom: 2px;
+}
+.toggle-buttons {
+    position: relative;
+    margin-top: 2px;
+    margin-right: 60px;
+    margin-left: 30px;
+    text-align: left;
+}
+
+.dash-graph {
+    margin-left: 200px;
+    width: 600px;
+    margin-right: 800px;
+}
+
+.radio-group .btn-group > .custom-control:not(:last-child) > .btn {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.radio-group .btn-group > .custom-control:not(:first-child) > .btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-left: -1px;
+}
+
+.button {
+    background-color: #e7e7e7;
+    border: none;
+    color: black;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    margin: 5px 5px;
+    cursor: pointer;
 }
 
 .logo {
@@ -15,6 +75,7 @@
 }
 
 .radioOptions {
+    margin-right: 300px;
     font-size: 20px;
     margin-top: 12px;
     text-align: center;
@@ -39,8 +100,9 @@
 
 .body {
     font-family: "Lato", sans-serif;
-    margin: 0;
+    margin-top: 5px;
     text-align: center;
+    margin-bottom: -10px;
 }
 
 .header {
@@ -64,16 +126,16 @@
     text-align: center;
     padding: 2px;
     margin-bottom: 12px;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
 .header-description {
     color: #003D71;
     margin: 2px auto;
     text-align: center;
-    max-width: 500px;
+    max-width: 700px;
     font-size: 25px;
-    margin-top: -5px;
+    margin-top: -10px;
 }
 
 .wrapper {
@@ -82,7 +144,7 @@
     max-width: 1024px;
     padding-right: 10px;
     padding-left: 10px;
-    margin-top: 20px;
+    margin-top: 5px;
 }
 
 .card {
@@ -91,11 +153,12 @@
 
 .menu-title {
     margin-top: 30px;
-    margin-bottom: 12px;
+    margin-bottom: -2px;
     font-weight: bold;
     color: #003D71;
     text-align: center;
     font-size: 20px;
+
 }
 
 .menu {
@@ -105,6 +168,7 @@
     justify-content: space-evenly;
     padding-top: 2px;
     padding-bottom: 12px;
+    margin-bottom: -10px;
     margin: -40px auto 0 auto;
     font-size: 16px;
 }
@@ -116,9 +180,12 @@
 
 .Select--single > .Select-control .Select-value, .Select-placeholder {
     line-height: 48px;
+
 }
 
 .Select--multi .Select-value-label {
     line-height: 32px;
+    margin-top: 20px;
+
 }
 

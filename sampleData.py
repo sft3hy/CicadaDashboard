@@ -15,7 +15,7 @@ class AttributeData:
 
     def __init__(self):
         self.star = 5
-        self.data = pd.read_json('finalBusinessData.json')
+        self.data = pd.read_json('Testing/finalBusinessData.json')
         self.states = [state for state in np.sort(self.data.state.unique())]
 
     def updateStar(self, starNum):
