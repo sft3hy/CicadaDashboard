@@ -470,6 +470,7 @@ def display_value(value):
 
 @app.callback(Output("bar-chart", "style"), [Input("radios", "value")])
 def display_value(value):
+    print(value)
     if value==4:
         return {'display': 'block'}
     else:
@@ -505,14 +506,14 @@ def display_value(checkinValue, radiosValue):
 
 @app.callback(Output("checkin-months", "style"), [Input("checkinToggle", "value"), Input("radios", "value")])
 def display_value(checkinValue, radiosValue):
-    if checkinValue==2 and radiosValue==1:
+    if checkinValue==3 and radiosValue==1:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
 @app.callback(Output("checkin-days", "style"), [Input("checkinToggle", "value"), Input("radios", "value")])
 def display_value(checkinValue, radiosValue):
-    if checkinValue==3 and radiosValue==1:
+    if checkinValue==2 and radiosValue==1:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -578,7 +579,7 @@ def makeNameVsStarsChart(state_chosen, n_clicks, visibility_state):
     if visibility_state == 3 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
         nameVsStars.write_image('images/nameVsStars.pdf')
         return nameVsStars, downloadFile(visibility_state)
-    return nameVsStars, dash.no_update
+    return nameVsStars, dash.no_updat
 
 # Radio buttons for changing stars in attribute graph
 @app.callback(
