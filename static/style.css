@@ -8,9 +8,8 @@
 }
 
 .fileButton {
-    margin-top: -55px;
-    margin-right: 60px;
-    margin-left: 1000px;
+    margin-top: 4px;
+    margin-right: 30px;
 }
 
 .radio-group .custom-control-input ~ .custom-control-label::before {
@@ -32,7 +31,7 @@
 }
 .toggle-buttons {
     position: relative;
-    margin-top: -10px;
+    margin-top: 4px;
     margin-right: 60px;
     margin-left: 30px;
     text-align: left;
@@ -53,6 +52,11 @@
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
   margin-left: -1px;
+}
+
+.btn-secondary {
+    clear: right;
+    float: right;
 }
 
 .button {
