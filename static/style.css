@@ -8,8 +8,8 @@
 }
 
 .fileButton {
-    margin-top: 4px;
-    margin-right: 30px;
+    margin-left: 40px;
+    margin-top: -250px;
 }
 
 .radio-group .custom-control-input ~ .custom-control-label::before {
@@ -31,7 +31,6 @@
 }
 .toggle-buttons {
     position: relative;
-    margin-top: 4px;
     margin-right: 60px;
     margin-left: 30px;
     text-align: left;
@@ -55,8 +54,8 @@
 }
 
 .btn-secondary {
-    clear: right;
-    float: right;
+    clear: left;
+    float: left;
 }
 
 .button {
@@ -152,8 +151,29 @@
     padding-left: 10px;
 }
 
+.restaurantDropdown {
+    clear: right;
+    float: right;
+    margin-right: 60px;
+    margin-left: -300px;
+    margin-top: -600px;
+}
+
+.card-body {
+    clear: right;
+    float: right;
+    margin-left: 20px;
+}
+
+.cardImg {
+    height: 150px;
+    /*object-fit: contain;*/
+}
+
 .card {
     box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
+    margin-right: -300px;
+
 }
 
 .menu-title {

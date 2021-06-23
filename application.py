@@ -132,7 +132,8 @@ for n in nams:
     i += 1
 
 mapDF = pd.DataFrame(list(zip(namsNStarsList, la, lo, sta, tars, nams, id, coun)),
-                     columns=['nameNStars', 'latitude', 'longitude', 'state', 'stars', 'name', 'business_id', 'review_count'])
+                     columns=['nameNStars', 'latitude', 'longitude', 'state', 'stars', 'name', 'business_id',
+                              'review_count'])
 
 # format a table to match check ins to business name using business_id
 checkins = pd.read_json("checkin.json")
@@ -161,7 +162,7 @@ for l in datesList:
     lastThreeMonthList = []
     for date in tempList:
         date = date[0:10]
-        if date > startOfLastWeeks < endDate :
+        if date > startOfLastWeeks < endDate:
             dayList.append(date)
         if date > startOfLastMonths < endDate:
             lastThreeMonthList.append(date)
@@ -197,10 +198,8 @@ mapper = {}
 for k in range(len(na)):
     mapper[k] = nameState[k]
 
-
 frequencies = frequencies.rename(columns=mapper)
 frequencies = frequencies.sort_index()
-
 
 #
 dayFrequencyList = []
@@ -241,16 +240,47 @@ monthFrequencies = monthFrequencies.sort_index()
 
 monthFrequencies = monthFrequencies.fillna(0)
 #
+restaurantsList = ['Starbucks', 'Burger King', 'Chick-fil-A', 'Chipotle',
+                   'Dunkin\'', 'Mcdonald\'s', 'Panera', 'Popeyes', 'Qdoba',
+                   'Taco bell', 'Wendy\'s']
+
+allNews = pd.read_json("currentNews.json")
+for i in range(len(allNews['publishedAt'])):
+    allNews['publishedAt'][i] = allNews['publishedAt'][i][0:10]
+
+sourceList = []
+titleList = []
+descriptionList = []
+urlList = []
+dateList = []
+rList = []
+imageUrls = []
+for r in restaurantsList:
+    for i in range(len(allNews['title'])):
+        if r in allNews['title'][i]:
+            rList.append(r)
+            sourceList.append(allNews['source'][i]["name"])
+            titleList.append(allNews['title'][i])
+            descriptionList.append(allNews['description'][i])
+            urlList.append(allNews['url'][i])
+            dateList.append(allNews['publishedAt'][i])
+            imageUrls.append(allNews['urlToImage'][i])
+
+newsDF = pd.DataFrame(list(zip(sourceList, titleList, descriptionList, urlList, dateList, rList, imageUrls)),
+                      columns=['source', 'title', 'description', 'url', 'date', 'restaurant',
+                               'imageUrl']).drop_duplicates(
+    subset='title')
+dropDownRestaurants = []
+for r in newsDF.restaurant.unique():
+    # dropDownRestaurants.append(dbc.DropdownMenuItem(r, id=r))
+    dropDownRestaurants.append({"label": r, 'value': r})
+correct_img = ""
 
 # the main meat of the display, all in this weird html/python hybrid (it's how dash works)
 app.layout = html.Div(
     children=[
         html.Div(
             children=[
-            #     html.Img(
-            #         src='https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/344612c2-fb5b-4cea-8846-869ed27fe70a/da6ozar-bc9308b1-01ae-49e7-b497-d7acbfa0f3ce.jpg/v1/fill/w_1024,h_576,q_75,strp/forest_background_by_chantalwut_da6ozar-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NTc2IiwicGF0aCI6IlwvZlwvMzQ0NjEyYzItZmI1Yi00Y2VhLTg4NDYtODY5ZWQyN2ZlNzBhXC9kYTZvemFyLWJjOTMwOGIxLTAxYWUtNDllNy1iNDk3LWQ3YWNiZmEwZjNjZS5qcGciLCJ3aWR0aCI6Ijw9MTAyNCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.6rj3OZCxvz65h1KORRIxnfy9Wy6JqYH9x-j3_2JI_gs',
-            #         sizes="small", className="gif", style="background-image",
-            #     ),
                 html.Img(
                     src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/NRO.svg/1200px-NRO.svg.png',
                     sizes="small", className="NRO", style={"clear": "right", "float": "right"}
@@ -269,7 +299,8 @@ app.layout = html.Div(
             children=[
                 html.Div(
                     children=[
-                        html.Div(children="Select a region and the specific metrics you want to view:", className="menu-title"),
+                        html.Div(children="Select a region and the specific metrics you want to view:",
+                                 className="menu-title"),
                         dcc.Checklist(
                             id="checklist",
                             options=[
@@ -318,41 +349,41 @@ app.layout = html.Div(
          ],
         ),
         html.Div(children=dcc.RadioItems(
-                id='checkinToggle',
-                options=[
-                    {'label': 'All Time', 'value': 1},
-                    {'label': 'Three Months', 'value': 2},
-                    {'label': 'Three Weeks', 'value': 3},
-                ],
-                className="radioOptions",
-                value=1, style={'display': 'block'}
+            id='checkinToggle',
+            options=[
+                {'label': 'All Time', 'value': 1},
+                {'label': 'Three Months', 'value': 2},
+                {'label': 'Three Weeks', 'value': 3},
+            ],
+            className="radioOptions",
+            value=1, style={'display': 'block'}
         )),
         html.Div(children=dcc.Graph(
             id="checkin-dates", config={"displayModeBar": False},
         ),
-            className="wrapper", style= {'display': 'block'}
+            className="wrapper", style={'display': 'block'}
         ),
         html.Div(children=dcc.Graph(
             id="checkin-days", config={"displayModeBar": False},
         ),
-            className="wrapper", style= {'display': 'block'}
+            className="wrapper", style={'display': 'block'}
         ),
         html.Div(children=dcc.Graph(
             id="checkin-months", config={"displayModeBar": False},
         ),
-            className="wrapper", style= {'display': 'block'}
+            className="wrapper", style={'display': 'block'}
         ),
         html.Div(children=dcc.Graph(
             id="bar-chart", config={"displayModeBar": False},
         ),
-            className="wrapper", style= {'display': 'block'}
+            className="wrapper", style={'display': 'block'}
         ),
         html.Div(children=[html.Div(
             children=dcc.Graph(
                 id='ma',
                 figure=map,
             ),
-            className="wrapper", style= {'display': 'block'}
+            className="wrapper", style={'display': 'block'}
         ),
         ],
         ),
@@ -360,7 +391,7 @@ app.layout = html.Div(
             children=dcc.Graph(
                 id="second-chart", config={"displayModeBar": False},
             ),
-            className="wrapper", style= {'display': 'block'}
+            className="wrapper", style={'display': 'block'}
         ),
         html.Div([
             # Create element to hide/show, in this case an 'Input Component'
@@ -383,7 +414,33 @@ app.layout = html.Div(
             children=dcc.Graph(
                 id="third-chart", config={"displayModeBar": False},
             ),
-            className="wrapper", style = {'display': 'block'}
+            className="wrapper", style={'display': 'block'}
+        ),
+        html.Div([
+            dcc.Dropdown(
+                    id='newsDropdown',
+                    options=dropDownRestaurants,
+                    value='Starbucks',
+                    className="restaurantDropdown",
+                ),
+        ], ),
+        html.Div(
+            children=[dbc.Card(
+                [dbc.CardImg(id="img", top=True, className="cardImg"),
+                 dbc.CardBody(
+                     [
+                         html.H4(className="card-title", id="card-title"),
+                         html.P(
+                             className="card-text",
+                             id="card-text",
+
+                         ),
+                     ]
+                 ),
+                 ],
+                style={"width": "20rem"},
+            ),
+            ]
         ),
     ],
 
@@ -411,7 +468,6 @@ def update_bar_chart(state_chosen, n_clicks, checkin_value, visibility_state):
             if option in col:
                 total_columns.append(col)
 
-
     check = frequencies[[state for state in total_columns]]
     dayCheck = dayFrequencies[[state for state in total_columns]]
     monthCheck = monthFrequencies[[state for state in total_columns]]
@@ -419,17 +475,18 @@ def update_bar_chart(state_chosen, n_clicks, checkin_value, visibility_state):
     # plotly bar charts
 
     checkinsVsDate = px.line(check, x=check.index, title="Product Usage All Time",
-                   y=total_columns, labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"} )
+                             y=total_columns,
+                             labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsDate.update_layout(yaxis_title="Number of Checkins")
 
     checkinsVsDay = px.line(dayCheck, x=dayCheck.index, title="Product Usage Last Three Weeks",
-                             y=total_columns,
-                             labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
+                            y=total_columns,
+                            labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsDay.update_layout(yaxis_title="Number of Checkins")
 
     checkinsVsMonth = px.line(monthCheck, x=monthCheck.index, title="Product Usage Last Three Months",
-                            y=total_columns,
-                            labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
+                              y=total_columns,
+                              labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsMonth.update_layout(yaxis_title="Number of Checkins")
 
     if visibility_state == 1 and checkin_value == 1 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
@@ -447,65 +504,74 @@ def update_bar_chart(state_chosen, n_clicks, checkin_value, visibility_state):
     # return all the charts/maps
     return checkinsVsDate, checkinsVsMonth, checkinsVsDay, dash.no_update
 
+
 @app.callback(Output("ma", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value==2:
+    if value == 2:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
+
 
 @app.callback(Output("second-chart", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value==3:
+    if value == 3:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
+
 
 @app.callback(Output("bar-chart", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value==4:
+    if value == 4:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
+
 
 @app.callback(Output("third-chart", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value==5:
+    if value == 5:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
+
 
 @app.callback(Output("numStarsRadio", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value==5:
+    if value == 5:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
+
 
 @app.callback(Output("checkinToggle", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value==1:
+    if value == 1:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
+
 
 @app.callback(Output("checkin-dates", "style"), [Input("checkinToggle", "value"), Input("radios", "value")])
 def display_value(checkinValue, radiosValue):
-    if checkinValue==1 and radiosValue==1:
+    if checkinValue == 1 and radiosValue == 1:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
+
 
 @app.callback(Output("checkin-months", "style"), [Input("checkinToggle", "value"), Input("radios", "value")])
 def display_value(checkinValue, radiosValue):
-    if checkinValue==3 and radiosValue==1:
+    if checkinValue == 3 and radiosValue == 1:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
+
 @app.callback(Output("checkin-days", "style"), [Input("checkinToggle", "value"), Input("radios", "value")])
 def display_value(checkinValue, radiosValue):
-    if checkinValue==2 and radiosValue==1:
+    if checkinValue == 2 and radiosValue == 1:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -517,13 +583,13 @@ def display_value(value):
     else:
         return {'display': 'none'}
 
-@app.callback(
-   Output('bar-chart', 'figure'),
-   Output('nameVsReviewDownload-csv', 'data'),
-   [Input("checklist", "value"),
-    Input('fileButton', 'n_clicks'),
-    State('radios', 'value')])
 
+@app.callback(
+    Output('bar-chart', 'figure'),
+    Output('nameVsReviewDownload-csv', 'data'),
+    [Input("checklist", "value"),
+     Input('fileButton', 'n_clicks'),
+     State('radios', 'value')])
 def makeNameVsReviewCount(state_chosen, n_clicks, visibility_state):
     fileButton = dash.callback_context
     dff = data[data["state"].isin(state_chosen)]
@@ -540,10 +606,10 @@ def makeNameVsReviewCount(state_chosen, n_clicks, visibility_state):
         return nameVsReviewCount, downloadFile(visibility_state, -1)
     return nameVsReviewCount, dash.no_update
 
-@app.callback(
-   Output('ma', 'figure'),
-   [Input("checklist", "value")])
 
+@app.callback(
+    Output('ma', 'figure'),
+    [Input("checklist", "value")])
 def makeMap(state_chosen):
     m = mapDF[mapDF["state"].isin(state_chosen)]
     ma = px.scatter_mapbox(m, lat="latitude", lon="longitude", hover_name="name",
@@ -556,13 +622,13 @@ def makeMap(state_chosen):
     ma.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
     return ma
 
-@app.callback(
-   Output('second-chart', 'figure'),
-   Output('nameVsStarsDownload-csv', 'data'),
-   [Input("checklist", "value"),
-    Input('fileButton', 'n_clicks'),
-    State('radios', 'value')])
 
+@app.callback(
+    Output('second-chart', 'figure'),
+    Output('nameVsStarsDownload-csv', 'data'),
+    [Input("checklist", "value"),
+     Input('fileButton', 'n_clicks'),
+     State('radios', 'value')])
 def makeNameVsStarsChart(state_chosen, n_clicks, visibility_state):
     fileButton = dash.callback_context
     st = formattedStars[formattedStars["state"].isin(state_chosen)]
@@ -580,15 +646,15 @@ def makeNameVsStarsChart(state_chosen, n_clicks, visibility_state):
         return nameVsStars, downloadFile(visibility_state, -1)
     return nameVsStars, dash.no_update
 
+
 # Radio buttons for changing stars in attribute graph
 @app.callback(
-   Output('third-chart', 'figure'),
-   Output('attributeCountDownload-csv', 'data'),
-   [Input('numStarsRadio', 'value'),
-    Input('checklist', 'value'),
-    Input('fileButton', 'n_clicks'),
-    State('radios', 'value')])
-
+    Output('third-chart', 'figure'),
+    Output('attributeCountDownload-csv', 'data'),
+    [Input('numStarsRadio', 'value'),
+     Input('checklist', 'value'),
+     Input('fileButton', 'n_clicks'),
+     State('radios', 'value')])
 def update_attribute_chart(star_chosen, state_chosen, n_clicks, visibility_state):
     fileButton = dash.callback_context
     a = AttributeData()
@@ -634,6 +700,27 @@ def downloadFile(visibility_state, checkin_state):
             # df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
             return dcc.send_file('images/checkinsVsDay.pdf')
 
+
+# inputList = []
+# for r in restaurantsList:
+#     inputList.append(Input(r, "n_clicks"))
+
+
+
+@app.callback([Output("card-text", "children"),
+               Output("card-title", "children"),
+               Output("img", "src")
+               ],
+              Input("newsDropdown", "value"))
+def update_card_text(dropdown_value):
+    article_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['title'].to_list()
+    date_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['date'].to_list()
+    source_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['source'].to_list()
+    correct_img = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['imageUrl'].to_list()[0]
+    all_titles = ""
+    for i in range(len(article_list)):
+        all_titles += str(i+1) + ": " + "Date: " + date_list[i] + ", Source: " + source_list[i] + ", Title: "+ article_list[i] + ". \n"
+    return all_titles, dropdown_value, correct_img
 
 # run the app at port 8080
 if __name__ == "__main__":
