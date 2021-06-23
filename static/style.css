@@ -38,9 +38,9 @@
 }
 
 .dash-graph {
-    margin-left: 200px;
+    margin-top: -175px;
+    margin-left: 250px;
     width: 600px;
-    margin-right: 800px;
 }
 
 .radio-group .btn-group > .custom-control:not(:last-child) > .btn {
@@ -82,9 +82,8 @@
 .radioOptions {
     margin-right: 300px;
     font-size: 20px;
-    margin-top: 12px;
     text-align: center;
-    margin-bottom: -10px;
+    margin-bottom: -30px;
 }
 
 .NRO {
@@ -144,12 +143,13 @@
 }
 
 .wrapper {
+    float: left;
+    clear: left;
     margin-right: auto;
     margin-left: auto;
     max-width: 1024px;
     padding-right: 10px;
     padding-left: 10px;
-    margin-top: 5px;
 }
 
 .card {
@@ -173,7 +173,7 @@
     justify-content: space-evenly;
     padding-top: 2px;
     padding-bottom: 12px;
-    margin-bottom: -10px;
+    margin-bottom: -30px;
     margin: -40px auto 0 auto;
     font-size: 16px;
 }
