@@ -157,6 +157,7 @@
     margin-right: 60px;
     margin-left: -300px;
     margin-top: -600px;
+    margin-bottom: -10px;
 }
 
 .card-body {
@@ -173,6 +174,7 @@
 .card {
     box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
     margin-right: -300px;
+    margin-left: 30px;
 
 }
 
