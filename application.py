@@ -12,6 +12,7 @@ import json
 from sampleData import AttributeData
 import os
 
+print("hello")
 
 
 if not os.path.exists("images"):
