@@ -12,9 +12,6 @@ import json
 from sampleData import AttributeData
 import os
 
-print("hello")
-print("You're early")
-
 if not os.path.exists("images"):
     os.mkdir("images")
 
