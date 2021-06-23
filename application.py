@@ -309,13 +309,14 @@ app.layout = html.Div(
         html.Div([
              # Create element to hide/show, in this case an 'Input Component'
              dbc.Button('Download Current Chart', id='fileButton', className='fileButton',
-                        n_clicks=0, style={"clear": "right", "float": "right"},),
+                        n_clicks=0, style={"clear": "right", "float": "right", 'display': 'block'}),
              html.Span(id='outputReport'),
              dcc.Download(id='nameVsStarsDownload-csv'),
              dcc.Download(id='nameVsReviewDownload-csv'),
              dcc.Download(id='attributeCountDownload-csv'),
              dcc.Download(id='productUsageDownload-csv'),
-         ],),
+         ],
+        ),
         html.Div(children=dcc.RadioItems(
                 id='checkinToggle',
                 options=[
@@ -398,8 +399,9 @@ app.layout = html.Div(
      Output('productUsageDownload-csv', 'data')],
     [Input("checklist", "value"),
      Input('fileButton', 'n_clicks'),
+     State("checkinToggle", "value"),
      State('radios', 'value')])
-def update_bar_chart(state_chosen, n_clicks, visibility_state):
+def update_bar_chart(state_chosen, n_clicks, checkin_value, visibility_state):
     # make dataframes that the buttons can update according to user requests
     fileButton = dash.callback_context
 
@@ -430,11 +432,17 @@ def update_bar_chart(state_chosen, n_clicks, visibility_state):
                             labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsMonth.update_layout(yaxis_title="Number of Checkins")
 
-    if visibility_state == 1 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        checkinsVsMonth.write_image('images/checkinsVsMonth.pdf')
-        checkinsVsDay.write_image('images/checkinsVsDay.pdf')
+    if visibility_state == 1 and checkin_value == 1 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
         checkinsVsDate.write_image('images/checkinsVsDate.pdf')
-        return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state)
+        return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 1)
+
+    if visibility_state == 1 and checkin_value == 2 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
+        checkinsVsMonth.write_image('images/checkinsVsMonth.pdf')
+        return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 2)
+
+    if visibility_state == 1 and checkin_value == 3 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
+        checkinsVsDay.write_image('images/checkinsVsDay.pdf')
+        return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 3)
 
     # return all the charts/maps
     return checkinsVsDate, checkinsVsMonth, checkinsVsDay, dash.no_update
@@ -502,6 +510,13 @@ def display_value(checkinValue, radiosValue):
     else:
         return {'display': 'none'}
 
+@app.callback(Output("fileButton", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value!=2:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
 @app.callback(
    Output('bar-chart', 'figure'),
    Output('nameVsReviewDownload-csv', 'data'),
@@ -522,7 +537,7 @@ def makeNameVsReviewCount(state_chosen, n_clicks, visibility_state):
                                )
     if visibility_state == 4 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
         nameVsReviewCount.write_image('images/nameVsReviewCount.pdf')
-        return nameVsReviewCount, downloadFile(visibility_state)
+        return nameVsReviewCount, downloadFile(visibility_state, -1)
     return nameVsReviewCount, dash.no_update
 
 @app.callback(
@@ -562,7 +577,7 @@ def makeNameVsStarsChart(state_chosen, n_clicks, visibility_state):
                          )
     if visibility_state == 3 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
         nameVsStars.write_image('images/nameVsStars.pdf')
-        return nameVsStars, downloadFile(visibility_state)
+        return nameVsStars, downloadFile(visibility_state, -1)
     return nameVsStars, dash.no_update
 
 # Radio buttons for changing stars in attribute graph
@@ -598,23 +613,12 @@ def update_attribute_chart(star_chosen, state_chosen, n_clicks, visibility_state
                                  xaxis_title="Attributes")
     if visibility_state == 5 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
         attributeCount.write_image('images/AttributeGraph.pdf')
-        return attributeCount, downloadFile(visibility_state)
+        return attributeCount, downloadFile(visibility_state, -1)
     return attributeCount, dash.no_update
-
-# hides download button for map
-@app.callback(
-   Output(component_id='fileButton', component_property='style'),
-   [Input(component_id='radios', component_property='value')])
-
-def show_hide_element(visibility_state):
-    if visibility_state != 'm':
-        return {'display': 'block'}
-    else:
-        return {'display': 'none'}
 
 # download report into csv file
 
-def downloadFile(visibility_state):
+def downloadFile(visibility_state, checkin_state):
     if visibility_state == 5:
         return dcc.send_file('images/AttributeGraph.pdf')
     elif visibility_state == 4:
@@ -622,8 +626,13 @@ def downloadFile(visibility_state):
     elif visibility_state == 3:
         return dcc.send_file('images/nameVsStars.pdf')
     else:
-    #df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
-        return dcc.send_file('images/checkinsVsDate.pdf', 'images/checkinsVsMonth.pdf', 'images/checkinsVsDay.pdf')
+        if checkin_state == 1:
+            return dcc.send_file('images/checkinsVsDate.pdf')
+        elif checkin_state == 2:
+            return dcc.send_file('images/checkinsVsMonth.pdf')
+        else:
+            # df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
+            return dcc.send_file('images/checkinsVsDay.pdf')
 
 
 # run the app at port 8080
