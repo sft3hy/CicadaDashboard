@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input, State
+from datetime import date
 import re
 import json
 from sampleData import AttributeData
@@ -18,11 +19,23 @@ if not os.path.exists("images"):
     os.mkdir("images")
 
 # pd print settings
-# pd.set_option('display.max_columns', None)
-# pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
 
 # reads in the json
 data = pd.read_json("finalBusinessData.json")
+data = data[data.name != 'Dunkin\' Donuts']
+data = data[data.name != 'Dunkin\' Donuts & Baskin-Robbins']
+data = data[data.name != 'Taco Bella\'s']
+data = data[data.name != 'Taco Bell Cantina']
+data = data[data.name != 'Taco Bell and KFC']
+data = data[data.name != 'Burger King Restaurant']
+data = data[data.name != 'Chipotle Mexican Grill - Austin']
+data = data[data.name != 'Starbucks Reserve']
+data = data[data.name != 'Starbucks Florida Hotel']
+data = data[data.name != 'Starbucks - The Independent']
+data = data[data.name != 'Starbucks Coffee']
+data = data[data.name != 'Starbucks Coffee Company']
 
 # # get smaller table to work with average stars
 # with open("finalBusinessData.json", encoding="UTF-8") as f:
@@ -138,6 +151,19 @@ mapDF = pd.DataFrame(list(zip(namsNStarsList, la, lo, sta, tars, nams, id, coun)
 # format a table to match check ins to business name using business_id
 checkins = pd.read_json("checkin.json")
 goodIDs = mapDF.business_id.to_list()
+
+checkins = checkins[checkins.name != 'Dunkin\' Donuts']
+checkins = checkins[checkins.name != 'Dunkin\' Donuts & Baskin-Robbins']
+checkins = checkins[checkins.name != 'Taco Bella\'s']
+checkins = checkins[checkins.name != 'Taco Bell Cantina']
+checkins = checkins[checkins.name != 'Taco Bell and KFC']
+checkins = checkins[checkins.name != 'Burger King Restaurant']
+checkins = checkins[checkins.name != 'Chipotle Mexican Grill - Austin']
+checkins = checkins[checkins.name != 'Starbucks Reserve']
+checkins = checkins[checkins.name != 'Starbucks Florida Hotel']
+checkins = checkins[checkins.name != 'Starbucks - The Independent']
+checkins = checkins[checkins.name != 'Starbucks Coffee']
+checkins = checkins[checkins.name != 'Starbucks Coffee Company']
 
 goodCheckins = checkins[checkins.business_id.isin(goodIDs)]
 nameAndCheckin = mapDF.merge(goodCheckins, on="business_id")
@@ -433,14 +459,14 @@ app.layout = html.Div(
                          html.P(
                              className="card-text",
                              id="card-text",
-
                          ),
                      ]
                  ),
                  ],
                 style={"width": "20rem"},
+                className="card-place"
             ),
-            ]
+            ], id="card"
         ),
     ],
 
@@ -474,20 +500,35 @@ def update_bar_chart(state_chosen, n_clicks, checkin_value, visibility_state):
 
     # plotly bar charts
 
-    checkinsVsDate = px.line(check, x=check.index, title="Product Usage All Time",
+    productToKeep = []
+    for name in total_columns:
+        if "Starbucks" in name:
+            productToKeep.append(name)
+
+    checkinsVsDate = px.line(check, x=check.index, title="Product Usage All Time - Click restaurants on the right to view their checkins over time",
                              y=total_columns,
                              labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsDate.update_layout(yaxis_title="Number of Checkins")
 
-    checkinsVsDay = px.line(dayCheck, x=dayCheck.index, title="Product Usage Last Three Weeks",
+    checkinsVsDate.for_each_trace(lambda trace: trace.update(visible="legendonly")
+                                  if trace.name not in productToKeep else ())
+
+    checkinsVsDay = px.line(dayCheck, x=dayCheck.index, title="Product Usage Last Three Weeks - Click restaurants on the right to view their checkins over time",
                             y=total_columns,
                             labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsDay.update_layout(yaxis_title="Number of Checkins")
 
-    checkinsVsMonth = px.line(monthCheck, x=monthCheck.index, title="Product Usage Last Three Months",
+    checkinsVsDay.for_each_trace(lambda trace: trace.update(visible="legendonly")
+                                  if trace.name not in productToKeep else ())
+
+
+    checkinsVsMonth = px.line(monthCheck, x=monthCheck.index, title="Product Usage Last Three Months - Click restaurants on the right to view their checkins over time",
                               y=total_columns,
                               labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsMonth.update_layout(yaxis_title="Number of Checkins")
+
+    checkinsVsMonth.for_each_trace(lambda trace: trace.update(visible="legendonly")
+                                  if trace.name not in productToKeep else ())
 
     if visibility_state == 1 and checkin_value == 1 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
         checkinsVsDate.write_image('images/checkinsVsDate.pdf')
@@ -579,6 +620,13 @@ def display_value(checkinValue, radiosValue):
 @app.callback(Output("fileButton", "style"), [Input("radios", "value")])
 def display_value(value):
     if value!=2:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(Output("card", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value != 5:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -701,10 +749,6 @@ def downloadFile(visibility_state, checkin_state):
             return dcc.send_file('images/checkinsVsDay.pdf')
 
 
-# inputList = []
-# for r in restaurantsList:
-#     inputList.append(Input(r, "n_clicks"))
-
 
 
 @app.callback([Output("card-text", "children"),
@@ -716,10 +760,15 @@ def update_card_text(dropdown_value):
     article_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['title'].to_list()
     date_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['date'].to_list()
     source_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['source'].to_list()
-    correct_img = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['imageUrl'].to_list()[0]
+    imgList = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['imageUrl'].to_list()
+    try:
+        correct_img = imgList[1]
+    except IndexError:
+        imgList = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['imageUrl'].to_list()
+        correct_img = imgList[0]
     all_titles = ""
     for i in range(len(article_list)):
-        all_titles += str(i+1) + ": " + "Date: " + date_list[i] + ", Source: " + source_list[i] + ", Title: "+ article_list[i] + ". \n"
+        all_titles += str(i+1) + ", Title: "+ article_list[i] + ": " + "Date: " + date_list[i] + ", Source: " + source_list[i] +  ". \n"
     return all_titles, dropdown_value, correct_img
 
 # run the app at port 8080

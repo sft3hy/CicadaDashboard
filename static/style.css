@@ -12,6 +12,7 @@
     margin-top: -250px;
 }
 
+
 .radio-group .custom-control-input ~ .custom-control-label::before {
   content: none;
   margin-bottom: 10px;
@@ -21,6 +22,7 @@
   content: none;
 
 }
+
 
 /* restyle radio items */
 .radio-group .custom-control {
@@ -39,7 +41,7 @@
 .dash-graph {
     margin-top: -175px;
     margin-left: 250px;
-    width: 600px;
+    width: 120%;
 }
 
 .radio-group .btn-group > .custom-control:not(:last-child) > .btn {
@@ -79,7 +81,8 @@
 }
 
 .radioOptions {
-    margin-right: 300px;
+    margin-right: 500px;
+    margin-left: 20px;
     font-size: 20px;
     text-align: center;
     margin-bottom: -30px;
@@ -152,16 +155,15 @@
 }
 
 .restaurantDropdown {
-    clear: right;
     float: right;
-    margin-right: 60px;
+    margin-right: 90px;
     margin-left: -300px;
     margin-top: -600px;
     margin-bottom: -10px;
+
 }
 
 .card-body {
-    clear: right;
     float: right;
     margin-left: 20px;
 }
@@ -173,9 +175,14 @@
 
 .card {
     box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
-    margin-right: -300px;
-    margin-left: 30px;
+    margin-top: 75px;
 
+}
+
+.card-place {
+    float: right;
+    margin-right: 60px;
+    margin-top: -450px;
 }
 
 .menu-title {
@@ -203,6 +210,7 @@
 .Select-control {
     width: 256px;
     height: 48px;
+    margin-top: 100px;
 }
 
 .Select--single > .Select-control .Select-value, .Select-placeholder {
