@@ -51,6 +51,7 @@ WIP
 
 """
 
+
 class LiveWebData:
 
     def __init__(self):
@@ -67,8 +68,45 @@ class LiveWebData:
 
         self.profile_id = query_first_profile(self.service)
 
+    """
+    Inputs: https://developers.google.com/analytics/devguides/reporting/realtime/v3/reference/data/realtime/get
+    Metrics and Dimensions: https://developers.google.com/analytics/devguides/reporting/realtime/dimsmets
+    
+    Default: Print the current number of users, separated by mobile device model
+    
+    Notes: Not all fields are required, only required field is Metrics
+            Format for multiple Dimensions, Metrics, etc. is: 'rt:____, rt:____'
+    
+    More Complex Example:
+    Returns the number of active users, separated into Countries and Page titles, with 1 max result...
+    
+            print(reporting.print_live_data(
+                dimensions='rt:pageTitle, rt:country',
+                metrics='rt:activeUsers',
+                max_results = 1,
+            ))
+    """
+
     # User Defined searches:
-    # WIP
+    def get_live_data(self, dimensions='rt:browser', metrics='rt:activeUsers', sort=None, filters=None, max_results=None):
+        return self.service.data().realtime().get(
+            ids='ga:' + self.profile_id,
+            metrics=metrics,
+            dimensions=dimensions,
+            sort=sort,
+            filters=filters,
+            max_results=max_results,
+        ).execute()
+
+    def print_live_data(self, dimensions='ga:source', metrics='ga:sessions', sort=None, filters=None, max_results=None):
+        result = self.get_live_data(
+            dimensions=dimensions,
+            metrics=metrics,
+            sort=sort,
+            filters=filters,
+            max_results=max_results,
+        )
+        return result.get('rows')
 
     # Pre-defined searches:
     # Returns the Google Analytics JSON for active users.
@@ -196,7 +234,7 @@ class WebData:
     Inputs: https://developers.google.com/analytics/devguides/reporting/core/v3/reference#filters
     Metrics and Dimensions: https://ga-dev-tools.web.app/dimensions-metrics-explorer/
     
-    Default: Print the number of sessions, and the sources they come from, over the last week
+    Default: Print the number of users, and the countries they come from, over the last week
     
     Notes: Not all fields are required, only required fields are Dates and Metrics
             Format for multiple Dimensions, Metrics, etc. is: 'ga:____, ga:____'
@@ -211,7 +249,8 @@ class WebData:
                 dimensions='ga:continent, ga:subContinent',
             ))
     """
-    def get_results(self, start_date='7daysAgo', end_date='today', dimensions='ga:source', metrics='ga:sessions', sort=None, filters=None, segment=None):
+    def get_results(self, start_date='7daysAgo', end_date='today', dimensions='ga:country', metrics='ga:users',
+                    sort=None, filters=None, segment=None):
         return self.service.data().ga().get(
             ids='ga:' + self.profile_id,
             start_date=start_date,
@@ -223,7 +262,8 @@ class WebData:
             segment=segment,
         ).execute()
 
-    def print_results(self, start_date='7daysAgo', end_date='today', dimensions='ga:source', metrics='ga:sessions', sort=None, filters=None, segment=None):
+    def print_results(self, start_date='7daysAgo', end_date='today', dimensions='ga:country', metrics='ga:users',
+                      sort=None, filters=None, segment=None):
         result = self.get_results(start_date, end_date, dimensions, metrics, sort, filters, segment)
         return result.get('rows')
 

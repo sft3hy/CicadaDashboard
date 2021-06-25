@@ -42,9 +42,18 @@ print("Users per Page:")
 print(liveReporting.users_per_page())
 print()
 
+# Active users per country and page title, with one max result
+print("Users per country and page title (Max: 1):")
+print(liveReporting.print_live_data(
+    dimensions='rt:pageTitle, rt:country',
+    metrics='rt:activeUsers',
+    max_results=1,
+))
+print()
+
 # Sessions last 7 days
-print("Sessions last 7 days:")
-print(reporting.get_results())
+print("Users per country, last 7 days:")
+print(reporting.print_results())
 print()
 
 
