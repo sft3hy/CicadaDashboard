@@ -473,7 +473,7 @@ app.layout = html.Div(
     className="background"
 )
 
-
+productToKeep = []
 # make the web-app responsive (so when you click something, it responds)
 @app.callback(
     [Output("checkin-dates", "figure"),
@@ -500,7 +500,7 @@ def update_bar_chart(state_chosen, n_clicks, checkin_value, visibility_state):
 
     # plotly bar charts
 
-    productToKeep = []
+
     for name in total_columns:
         if "Starbucks" in name:
             productToKeep.append(name)
@@ -529,6 +529,7 @@ def update_bar_chart(state_chosen, n_clicks, checkin_value, visibility_state):
 
     checkinsVsMonth.for_each_trace(lambda trace: trace.update(visible="legendonly")
                                   if trace.name not in productToKeep else ())
+
 
     if visibility_state == 1 and checkin_value == 1 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
         checkinsVsDate.write_image('images/checkinsVsDate.pdf')
@@ -767,9 +768,10 @@ def update_card_text(dropdown_value):
         imgList = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['imageUrl'].to_list()
         correct_img = imgList[0]
     all_titles = ""
+    each_article = []
     for i in range(len(article_list)):
-        all_titles += str(i+1) + ", Title: "+ article_list[i] + ": " + "Date: " + date_list[i] + ", Source: " + source_list[i] +  ". \n"
-    return all_titles, dropdown_value, correct_img
+        each_article.append(dbc.ListGroupItem(article_list[i] + ": " + "Date: " + date_list[i] + ", Source: " + source_list[i] +  ". \n"))
+    return each_article, dropdown_value, correct_img
 
 # run the app at port 8080
 if __name__ == "__main__":
