@@ -12,6 +12,41 @@
     margin-top: -250px;
 }
 
+@keyframes fadein {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 0.5;
+    }
+}
+
+._dash-loading-callback {
+  font-family: sans-serif;
+  padding-top: 50px;
+  color: rgb(90, 90, 90);
+
+  /* The banner */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  cursor: progress;
+
+  opacity: 0;
+  background-color: rgb(250, 250, 250);
+  /* Delay animation by 1s to prevent flashing
+     and smoothly transition the animation over 0.5s
+   */
+  -moz-animation: fadein 0.5s ease-in 0.25s forwards; /* Firefox */
+  -webkit-animation: fadein 0.5s ease-in 0.25s forwards; /* Safari and Chrome */
+  -o-animation: fadein 0.5s ease-in 0.25s forwards; /* Opera */
+    animation: fadein 0.5s ease-in 0.25s forwards;
+}
+
+
 
 .radio-group .custom-control-input ~ .custom-control-label::before {
   content: none;
@@ -41,7 +76,11 @@
 .dash-graph {
     margin-top: -175px;
     margin-left: 250px;
-    width: 120%;
+}
+.svg-container {
+    margin-top: -175px;
+    margin-left: 250px;
+    max-height: 450px;
 }
 
 .radio-group .btn-group > .custom-control:not(:last-child) > .btn {
@@ -154,17 +193,15 @@
     padding-left: 10px;
 }
 
-.restaurantDropdown {
+.dropAndCard {
     float: right;
-    margin-right: 90px;
-    margin-left: -300px;
+    clear: right;
+    margin-right: 40px;
+    margin-left: -400px;
     margin-top: -600px;
-    margin-bottom: -10px;
-
 }
 
 .card-body {
-    float: right;
     margin-left: 20px;
 }
 
@@ -175,14 +212,10 @@
 
 .card {
     box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
-    margin-top: 75px;
 
 }
 
 .card-place {
-    float: right;
-    margin-right: 60px;
-    margin-top: -450px;
 }
 
 .menu-title {
