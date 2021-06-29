@@ -10,6 +10,8 @@
 .fileButton {
     margin-left: 40px;
     margin-top: -250px;
+    clear: left;
+    float: left;
 }
 
 .radio-group .custom-control-input ~ .custom-control-label::before {
@@ -36,10 +38,50 @@
     text-align: left;
 }
 
+.summaryStatsGroup .custom-control-input ~ .custom-control-label::before {
+  content: none;
+}
+
+.summaryStatsGroup .custom-radio .custom-control-input ~ .custom-control-label::after {
+  content: none;
+
+}
+
+/* restyle radio items */
+.summaryStatsGroup .custom-control {
+  padding-left: 2px;
+    padding-right: 2px;
+    text-align: center;
+    horiz-align: center;
+    margin-bottom: 2px;
+    position: relative;
+    display: inline;
+    left: 150px;
+}
+
+.summaryStatsGroup .summaryStatsButtons > .custom-control:not(:last-child) > .btn {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.summaryStatsGroups .summaryStatsButtons > .custom-control:not(:first-child) > .btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-left: -1px;
+}
+
+.summaryStatsButtons {
+    position: center;
+    display: inline-block;
+    margin-top: 200px;
+    margin-left: 100px;
+    text-align: center;
+}
+
 .dash-graph {
-    margin-top: -175px;
+    margin-top: -150px;
     margin-left: 250px;
-    width: 600px;
+    width: 800px;
 }
 
 .radio-group .btn-group > .custom-control:not(:last-child) > .btn {
@@ -149,6 +191,15 @@
     max-width: 1024px;
     padding-right: 10px;
     padding-left: 10px;
+}
+
+.starsDropdown {
+    clear: bottom;
+    float: bottom;
+    right: -100px;
+    left: 800px;
+    /*margin-top: -600px;*/
+    /*margin-bottom: -10px;*/
 }
 
 .restaurantDropdown {

@@ -11,12 +11,14 @@ import re
 import json
 from sampleData import AttributeData
 import os
+import pickle
 
 
 
 if not os.path.exists("images"):
     os.mkdir("images")
 
+attributeCount = ''
 # pd print settings
 # pd.set_option('display.max_columns', None)
 # pd.set_option('display.max_rows', None)
@@ -340,7 +342,7 @@ app.layout = html.Div(
         html.Div([
              # Create element to hide/show, in this case an 'Input Component'
              dbc.Button('Download Current Chart', id='fileButton', className='fileButton',
-                        n_clicks=0, style={"clear": "right", "float": "right", 'display': 'block'}),
+                        n_clicks=0, style={"clear": "left", "float": "left", 'display': 'block'}),
              html.Span(id='outputReport'),
              dcc.Download(id='nameVsStarsDownload-csv'),
              dcc.Download(id='nameVsReviewDownload-csv'),
@@ -358,6 +360,25 @@ app.layout = html.Div(
             className="radioOptions",
             value=1, style={'display': 'block'}
         )),
+        # html.Div(
+        #     [
+        #         dbc.RadioItems(
+        #             id="summaryStatsRadio",
+        #             className="toggle-buttons",
+        #             labelClassName="btn btn-secondary",
+        #             labelCheckedClassName="active",
+        #
+        #             options=[
+        #                 {"label": "Attribute Comparison By Stars", "value": 1},
+        #                 {"label": "Attribute Comparison By Product", "value": 2},
+        #             ],
+        #             value=2,
+        #         ),
+        #         html.Div(id="output2"),
+        #     ],
+        #     style={'display': 'block'},
+        #     className="radio-group",
+        # ),
         html.Div(children=dcc.Graph(
             id="checkin-dates", config={"displayModeBar": False},
         ),
@@ -395,21 +416,50 @@ app.layout = html.Div(
         ),
         html.Div([
             # Create element to hide/show, in this case an 'Input Component'
-            dcc.RadioItems(
+            dbc.RadioItems(
                 id='numStarsRadio',
+                className="btn-group-toggle",
+                labelClassName="btn btn-outline-secondary",
+                labelCheckedClassName="active",
                 options=[
-                    {'label': '1 Star', 'value': '1'},
-                    {'label': '2 Stars', 'value': '2'},
-                    {'label': '3 Stars', 'value': '3'},
-                    {'label': '4 Stars', 'value': '4'},
-                    {'label': '5 Stars', 'value': '5'},
+                    {"label": "Attribute Comparison By Stars", "value": 1},
+                    {"label": "Attribute Comparison By Product", "value": 2},
                 ],
-                className="radioOptions",
-                value="5", style={'display': 'block'}
-            )
+                value=1, style={'display': 'block'}
+            ),
+            html.Div(id="output2"),
         ],
+            className="summaryStatsGroup",
         ),
 
+        # html.Div(
+        #     [
+        #         dbc.RadioItems(
+        #             id="summaryStatsRadio",
+        #             className="toggle-buttons",
+        #             labelClassName="btn btn-secondary",
+        #             labelCheckedClassName="active",
+        #
+        #             options=[
+        #                 {"label": "Attribute Comparison By Stars", "value": 1},
+        #                 {"label": "Attribute Comparison By Product", "value": 2},
+        #             ],
+        #             value=2,
+        #         ),
+        #         html.Div(id="output2"),
+        #     ],
+        #     style={'display': 'block'},
+        #     className="radio-group",
+        # ),
+
+        html.Div([
+            dcc.Dropdown(
+                    id='starsDropdown',
+                    options=['1 Star', '2'],
+                    value='Starbucks',
+                    className="starsDropdown",
+                ),
+        ], ),
         html.Div(
             children=dcc.Graph(
                 id="third-chart", config={"displayModeBar": False},
@@ -440,7 +490,7 @@ app.layout = html.Div(
                  ],
                 style={"width": "20rem"},
             ),
-            ]
+            ], id='card',
         ),
     ],
 
@@ -452,13 +502,11 @@ app.layout = html.Div(
 @app.callback(
     [Output("checkin-dates", "figure"),
      Output("checkin-days", "figure"),
-     Output("checkin-months", "figure"),
-     Output('productUsageDownload-csv', 'data')],
+     Output("checkin-months", "figure")],
     [Input("checklist", "value"),
-     Input('fileButton', 'n_clicks'),
      State("checkinToggle", "value"),
      State('radios', 'value')])
-def update_bar_chart(state_chosen, n_clicks, checkin_value, visibility_state):
+def update_bar_chart(state_chosen, checkin_value, visibility_state):
     # make dataframes that the buttons can update according to user requests
     fileButton = dash.callback_context
 
@@ -489,20 +537,20 @@ def update_bar_chart(state_chosen, n_clicks, checkin_value, visibility_state):
                               labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsMonth.update_layout(yaxis_title="Number of Checkins")
 
-    if visibility_state == 1 and checkin_value == 1 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        checkinsVsDate.write_image('images/checkinsVsDate.pdf')
-        return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 1)
-
-    if visibility_state == 1 and checkin_value == 2 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        checkinsVsMonth.write_image('images/checkinsVsMonth.pdf')
-        return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 2)
-
-    if visibility_state == 1 and checkin_value == 3 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        checkinsVsDay.write_image('images/checkinsVsDay.pdf')
-        return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 3)
+    # if visibility_state == 1 and checkin_value == 1 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
+    #     checkinsVsDate.write_image('images/checkinsVsDate.pdf')
+    #     return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 1)
+    #
+    # if visibility_state == 1 and checkin_value == 2 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
+    #     checkinsVsMonth.write_image('images/checkinsVsMonth.pdf')
+    #     return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 2)
+    #
+    # if visibility_state == 1 and checkin_value == 3 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
+    #     checkinsVsDay.write_image('images/checkinsVsDay.pdf')
+    #     return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 3)
 
     # return all the charts/maps
-    return checkinsVsDate, checkinsVsMonth, checkinsVsDay, dash.no_update
+    return checkinsVsDate, checkinsVsMonth, checkinsVsDay
 
 
 @app.callback(Output("ma", "style"), [Input("radios", "value")])
@@ -537,12 +585,12 @@ def display_value(value):
         return {'display': 'none'}
 
 
-@app.callback(Output("numStarsRadio", "style"), [Input("radios", "value")])
-def display_value(value):
-    if value == 5:
-        return {'display': 'block'}
-    else:
-        return {'display': 'none'}
+# @app.callback(Output("numStarsRadio", "style"), [Input("radios", "value")])
+# def display_value(value):
+#     if value == 5:
+#         return {'display': 'block'}
+#     else:
+#         return {'display': 'none'}
 
 
 @app.callback(Output("checkinToggle", "style"), [Input("radios", "value")])
@@ -583,14 +631,26 @@ def display_value(value):
     else:
         return {'display': 'none'}
 
+# @app.callback(Output("starsDropdown", "style"), [Input("radios", "value")])
+# def display_value(value):
+#     if value==5:
+#         return {'display': 'block'}
+#     else:
+#         return {'display': 'none'}
+
+@app.callback(Output("card", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value!=5:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
 
 @app.callback(
     Output('bar-chart', 'figure'),
-    Output('nameVsReviewDownload-csv', 'data'),
     [Input("checklist", "value"),
-     Input('fileButton', 'n_clicks'),
      State('radios', 'value')])
-def makeNameVsReviewCount(state_chosen, n_clicks, visibility_state):
+def makeNameVsReviewCount(state_chosen, visibility_state):
     fileButton = dash.callback_context
     dff = data[data["state"].isin(state_chosen)]
     nameVsReviewCount = px.bar(dff, x="review_count", y="name", orientation='h', color="state",
@@ -601,10 +661,10 @@ def makeNameVsReviewCount(state_chosen, n_clicks, visibility_state):
                                    "state": "State"
                                }
                                )
-    if visibility_state == 4 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        nameVsReviewCount.write_image('images/nameVsReviewCount.pdf')
-        return nameVsReviewCount, downloadFile(visibility_state, -1)
-    return nameVsReviewCount, dash.no_update
+    # if visibility_state == 4 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
+    #     nameVsReviewCount.write_image('images/nameVsReviewCount.pdf')
+    #     return nameVsReviewCount, downloadFile(visibility_state, -1)
+    return nameVsReviewCount
 
 
 @app.callback(
@@ -625,11 +685,9 @@ def makeMap(state_chosen):
 
 @app.callback(
     Output('second-chart', 'figure'),
-    Output('nameVsStarsDownload-csv', 'data'),
     [Input("checklist", "value"),
-     Input('fileButton', 'n_clicks'),
      State('radios', 'value')])
-def makeNameVsStarsChart(state_chosen, n_clicks, visibility_state):
+def makeNameVsStarsChart(state_chosen, visibility_state):
     fileButton = dash.callback_context
     st = formattedStars[formattedStars["state"].isin(state_chosen)]
     nameVsStars = px.bar(st, x="stars", y="name", orientation='h',
@@ -641,51 +699,146 @@ def makeNameVsStarsChart(state_chosen, n_clicks, visibility_state):
                              "state": "State"
                          }
                          )
-    if visibility_state == 3 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        nameVsStars.write_image('images/nameVsStars.pdf')
-        return nameVsStars, downloadFile(visibility_state, -1)
-    return nameVsStars, dash.no_update
+    # if visibility_state == 3 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
+    #     nameVsStars.write_image('images/nameVsStars.pdf')
+    #     return nameVsStars, downloadFile(visibility_state, -1)
+    return nameVsStars
+
+
 
 
 # Radio buttons for changing stars in attribute graph
 @app.callback(
     Output('third-chart', 'figure'),
-    Output('attributeCountDownload-csv', 'data'),
-    [Input('numStarsRadio', 'value'),
-     Input('checklist', 'value'),
-     Input('fileButton', 'n_clicks'),
+    [Input('checklist', 'value'),
      State('radios', 'value')])
-def update_attribute_chart(star_chosen, state_chosen, n_clicks, visibility_state):
+def update_attribute_chart(state_chosen, visibility_state):
     fileButton = dash.callback_context
+
+    # if fileButton.triggered and fileButton.triggered[0]['prop_id'] != 'fileButton.n_clicks':
     a = AttributeData()
     a.updateStates(state_chosen)
-    num_stars = 5
-    if star_chosen == '1':
-        num_stars = 1
-    elif star_chosen == '2':
-        num_stars = 2
-    elif star_chosen == '3':
-        num_stars = 3
-    elif star_chosen == '4':
-        num_stars = 4
-    a.updateStar(num_stars)
-    labels, attributesTrue, attributesFalse = a.createAttributeGraphs(False)
-    attributeCount = go.Figure(data=[
-        go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
-        go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
-    ])
-    attributeCount.update_layout(barmode='group', title='Attributes of ' + str(a.getStar()) + ' Star Products',
+    a.updateStar(1)
+    labels1, attributesTrue1, attributesFalse1 = a.createAttributeGraphs(False)
+    a.updateStar(2)
+    labels2, attributesTrue2, attributesFalse2 = a.createAttributeGraphs(False)
+    a.updateStar(3)
+    labels3, attributesTrue3, attributesFalse3 = a.createAttributeGraphs(False)
+    a.updateStar(4)
+    labels4, attributesTrue4, attributesFalse4 = a.createAttributeGraphs(False)
+    a.updateStar(5)
+    labels5, attributesTrue5, attributesFalse5 = a.createAttributeGraphs(False)
+
+    attributeCount = go.Figure()
+    attributeCount.add_trace(go.Bar(name='True', x=labels1, y=attributesTrue1, marker_color='darkblue', visible=False))
+    attributeCount.add_trace(go.Bar(name='False', x=labels1, y=attributesFalse1, marker_color='lightblue', visible=False))
+    attributeCount.add_trace(go.Bar(name='True', x=labels2, y=attributesTrue2, marker_color='darkblue', visible=False))
+    attributeCount.add_trace(go.Bar(name='False', x=labels2, y=attributesFalse2, marker_color='lightblue', visible=False))
+    attributeCount.add_trace(go.Bar(name='True', x=labels3, y=attributesTrue3, marker_color='darkblue', visible=False))
+    attributeCount.add_trace(go.Bar(name='False', x=labels3, y=attributesFalse3, marker_color='lightblue', visible=False))
+    attributeCount.add_trace(go.Bar(name='True', x=labels4, y=attributesTrue4, marker_color='darkblue', visible=False))
+    attributeCount.add_trace(go.Bar(name='False', x=labels4, y=attributesFalse4, marker_color='lightblue', visible=False))
+    attributeCount.add_trace(go.Bar(name='True', x=labels5, y=attributesTrue5, marker_color='darkblue', visible=True))
+    attributeCount.add_trace(go.Bar(name='False', x=labels5, y=attributesFalse5, marker_color='lightblue', visible=True))
+    attributeCount.update_layout(title='Attributes of 5 Star Products')
+    attributeCount.update_layout(barmode='group',
                                  yaxis_title="Number of Attributes",
-                                 xaxis_title="Attributes")
-    if visibility_state == 5 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        attributeCount.write_image('images/AttributeGraph.pdf')
-        return attributeCount, downloadFile(visibility_state, -1)
-    return attributeCount, dash.no_update
+                                 xaxis_title="Attributes",
+                                 # execute=saveImagesOfCharts(attributeCount),
+                                 clickmode='event',
+                                 updatemenus=[dict(
+                                        type = "dropdown",
+                                        direction = 'down',
+                                        active=4,
+                                        buttons=list([
+                                            dict(
+                                                args=[{'visible': [True, True, False, False, False, False,
+                                                                   False, False, False, False]},
+                                                      {'title':'Attributes of 1 Star Products'}],
+                                                label="1 Star",
+                                                method="update"
+                                            ),
+                                            dict(
+                                                args=[{'visible': [False, False, True, True, False, False,
+                                                                   False, False, False, False]},
+                                                      {'title': 'Attributes of 2 Star Products'}],
+                                                label="2 Star",
+                                                method="update"
+                                            ),
+                                            dict(
+                                                args=[{'visible': [False, False, False, False, True, True,
+                                                                   False, False, False, False]},
+                                                      {'title': 'Attributes of 3 Star Products'}],
+                                                label="3 Star",
+                                                method="update"
+                                            ),
+                                            dict(
+                                                args=[{'visible': [False, False, False, False, False, False,
+                                                                   True, True, False, False]},
+                                                      {'title': 'Attributes of 4 Star Products'}],
+                                                label="4 Star",
+                                                method="update"
+                                            ),
+                                            dict(
+                                                args=[{'visible': [False, False, False, False, False, False,
+                                                                   False, False, True, True]},
+                                                      {'title':'Attributes of 5 Star Products'}],
+                                                label="5 Star",
+                                                method="update"
+                                            )
+                                        ]),
+                                        pad={"r": 0, "t": 0},
+                                        showactive=True,
+                                        x=0.5,
+                                        xanchor="left",
+                                        y=1.5,
+                                        yanchor="top"
+                                    ),])
+    print('ayyy')
+    f = go.FigureWidget(attributeCount)
+    # attributeCount.on('plotly_click', saveImagesOfCharts(attributeCount))
+    # attributeCount.on_selection(print('now'))
+
+    # attributeCount.
+    # with open('attributeCount.pkl', 'wb') as output:
+    #     pickle.dump(attributeCount, output, pickle.HIGHEST_PROTOCOL)
+    # saveImagesOfCharts()
+    # if visibility_state == 5 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
+    #     attributeCount.write_image('images/AttributeGraph.pdf')
+    #     return attributeCount, downloadFile(visibility_state, -1)
+    return attributeCount
+
+# attributeCount = ''
+# with open('attributeCount.pkl', 'rb') as input:
+#     attributeCount = pickle.load(input)
+# f = go.FigureWidget(attributeCount)
+# print(f.data[0])
+# f.data[0].on_click(print('brrrr'))
+
+# @app.callback(Output('third-chart', 'figure'), [Input("oneStar", "value"), State('radios', 'value')])
+# def display_value(value, visibility_state):
+#     if visibility_state == 5:
+#         print('inside')
+#     return dash.no_update
+
+def saveImagesOfCharts(figure):
+    print('here')
+    # print(figure)
+    with open('attributeCount.pkl', 'wb') as output:
+        pickle.dump(figure, output, pickle.HIGHEST_PROTOCOL)
 
 # download report into csv file
-
-def downloadFile(visibility_state, checkin_state):
+@app.callback(
+    Output('attributeCountDownload-csv', 'data'),
+    [Input('fileButton', 'n_clicks'),
+     State('radios', 'value'),
+     State("checkinToggle", "value")],
+    prevent_initial_call=True)
+def downloadFile(n_clicks, visibility_state, checkin_state):
     if visibility_state == 5:
+        with open('attributeCount.pkl', 'rb') as input:
+            attributeCount = pickle.load(input)
+            attributeCount.write_image('images/AttributeGraph.pdf')
         return dcc.send_file('images/AttributeGraph.pdf')
     elif visibility_state == 4:
         return dcc.send_file('images/nameVsReviewCount.pdf')
