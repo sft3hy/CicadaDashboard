@@ -469,13 +469,14 @@ app.layout = html.Div(
     className="background"
 )
 
-productToKeep = []
+
 # make the web-app responsive (so when you click something, it responds)
 @app.callback(
     [Output("checkin-dates", "figure"),
      Output("checkin-days", "figure"),
      Output("checkin-months", "figure"),
-     Output('productUsageDownload-csv', 'data')],
+     Output('productUsageDownload-csv', 'data'),
+     ],
     [Input("newsDropdown", "value"),
      Input("checklist", "value"),
      Input('fileButton', 'n_clicks'),
@@ -491,13 +492,11 @@ def update_bar_chart(dropdown_value, state_chosen, n_clicks, checkin_value, visi
         for col in frequencies.columns:
             if option in col:
                 total_columns.append(col)
-
     check = frequencies[[state for state in total_columns]]
     dayCheck = dayFrequencies[[state for state in total_columns]]
     monthCheck = monthFrequencies[[state for state in total_columns]]
 
     # plotly bar charts
-
 
     productToKeep = []
     for name in total_columns:
@@ -778,10 +777,52 @@ def update_card_text(dropdown_value, start_date, end_date):
             each_article.append(dbc.ListGroupItem(article_list[i] + ": " + "Date: " + date_list[i] + ", Source: " + source_list[i] +  ".", href=url_list[i], target="_blank"))
     return each_article, dropdown_value, correct_img
 
-@app.callback(Output("newsDropdown", "value"), Input("checkin-dates", "figure"))
-def update_dropdown(sty):
-    print(sty)
-    return "Starbucks"
+# make the dropdown propagate with the trace selected on the graph
+@app.callback(Output("newsDropdown", "value"),
+              [Input("checklist", "value"),
+               Input("checkin-dates", "restyleData"),
+               ])
+def update_dropdown(state_chosen, overall):
+    total_columns = []
+    for option in state_chosen:
+        for col in frequencies.columns:
+            if option in col:
+                total_columns.append(col)
+    toReturn = ""
+    if total_columns[overall[1][0]]:
+        toReturn = total_columns[overall[1][0]][4:]
+    return toReturn
+
+# @app.callback(Output("newsDropdown", "value"),
+#               [Input("checklist", "value"),
+#                Input("checkin-months", "restyleData"),
+#                ])
+# def update_dropdown(state_chosen, months):
+#     total_columns = []
+#     for option in state_chosen:
+#         for col in frequencies.columns:
+#             if option in col:
+#                 total_columns.append(col)
+#     toReturn = ""
+#     if total_columns[months[1][0]]:
+#         toReturn = total_columns[months[1][0]][4:]
+#     return toReturn
+#
+# @app.callback(Output("newsDropdown", "value"),
+#               [Input("checklist", "value"),
+#                Input("checkin-days", "restyleData"),
+#                ])
+# def update_dropdown(state_chosen, days):
+#     total_columns = []
+#     for option in state_chosen:
+#         for col in frequencies.columns:
+#             if option in col:
+#                 total_columns.append(col)
+#     toReturn = ""
+#     if total_columns[days[1][0]]:
+#         toReturn = total_columns[days[1][0]][4:]
+#     return toReturn
+
 
 # run the app at port 8080
 if __name__ == "__main__":
