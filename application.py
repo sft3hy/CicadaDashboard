@@ -7,16 +7,40 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input, State
+import requests
 from datetime import date
+from plotly.subplots import make_subplots
 import re
 import json
 from sampleData import AttributeData
 import os
+import pickle
 
+# instagram dataframes
+instaNames = ["starbucks", "burgerking", "chickfila", "chipotle", "dunkin", "mcdonalds",
+              "panera", "popeyes", "qdoba", "tacobell", "wendys"]
+newsNames = ["Starbucks", "Burger King", "Chick-fil-A", "Chipotle", "Dunkin'", "McDonald's", "Panera",
+             "Popeyes", "Qdoba", "Taco Bell", "Wendy's"]
+socialMediaDFs = []
 
+for n in instaNames:
+    tempDF = pd.read_json("socialMediaJson/" + n + ".json")
+    socialMediaDFs.append(tempDF)
 
-if not os.path.exists("images"):
-    os.mkdir("images")
+# save social media images to files
+# i = 0
+# for l in socialMediaDFs:
+#     j = 1
+#     for ur in l.url:
+#         response = requests.get(ur)
+#         file = open("images/"+newsNames[i]+str(j)+".png", "wb")
+#         file.write(response.content)
+#         file.close()
+#         j+=1
+#     i+=1
+
+if not os.path.exists("static/images"):
+    os.mkdir("static/images")
 
 # pd print settings
 pd.set_option('display.max_columns', None)
@@ -25,13 +49,17 @@ pd.set_option('display.max_rows', None)
 # reads in the json
 data = pd.read_json("finalBusinessData.json")
 
-noGood = ['Dunkin\' Donuts', 'Dunkin\' Donuts & Baskin-Robbins', 'Taco Bella\'s', 'Taco Bell Cantina',
-          'Taco Bell and KFC', 'Burger King Restaurant', 'Chipotle Mexican Grill - Austin', 'Starbucks Reserve',
-          'Starbucks Florida Hotel', 'Starbucks - The Independent', 'Starbucks Coffee', 'Starbucks Coffee Company']
+noGood = ['Dunkin\' Donuts', 'Dunkin\' Donuts & Baskin-Robbins', 'Taco Bella\'s', 'Wendy\'s '
+          'Taco Bell Cantina', 'Starbucks ', 'Taco Bell and KFC', 'Burger King Restaurant',
+          'Chipotle Mexican Grill - Austin', 'Starbucks Reserve', 'Starbucks Florida Hotel',
+          'Starbucks - The Independent', 'Starbucks Coffee', 'Starbucks Coffee Company',
+          'Kentucky Fried Chicken', "Dunkin'  Donuts", "Wendy's "]
+
+replacements = {'Chipotle Mexican Grill': 'Chipotle', 'QDOBA Mexican Eats': 'QDOBA', 'Popeyes Louisiana Kitchen': 'Popeyes', 'Panera Bread': 'Panera'}
+
 for n in noGood:
     data = data[data.name != n]
-data = data.replace({'Chipotle Mexican Grill': 'Chipotle', 'QDOBA Mexican Eats': 'QDOBA', 'Popeyes Louisiana Kitchen': 'Popeyes'})
-
+data = data.replace(replacements)
 
 # # get smaller table to work with average stars
 # with open("finalBusinessData.json", encoding="UTF-8") as f:
@@ -151,7 +179,7 @@ namesList = s.name.to_list()
 
 formattedStars = pd.DataFrame(
     list(zip(starsList, statesList, namesList)), columns=['stars', 'state', 'name'])
-formattedStars = formattedStars.replace({'Chipotle Mexican Grill': 'Chipotle', 'QDOBA Mexican Eats': 'QDOBA', 'Popeyes Louisiana Kitchen': 'Popeyes'})
+formattedStars = formattedStars.replace(replacements)
 
 # format map points to show stars and business name
 mapData = pd.read_json("mapData.json")
@@ -195,7 +223,7 @@ finalCheckins = nameAndCheckin[['name_x', 'date', 'state_x']]
 finalCheckins = finalCheckins[finalCheckins["date"] != "None"]
 finalCheckins = finalCheckins.dropna()
 finalCheckins = finalCheckins.groupby(['state_x', 'name_x'])['date'].apply(', '.join).reset_index()
-finalCheckins = finalCheckins.replace({'Chipotle Mexican Grill': 'Chipotle', 'QDOBA Mexican Eats': 'QDOBA', 'Popeyes Louisiana Kitchen': 'Popeyes'})
+finalCheckins = finalCheckins.replace(replacements)
 
 
 datesList = finalCheckins.date.to_list()
@@ -292,7 +320,7 @@ monthFrequencies = monthFrequencies.sort_index()
 monthFrequencies = monthFrequencies.fillna(0)
 #
 restaurantsList = ['Starbucks', 'Burger King', 'Chick-fil-A', 'Chipotle',
-                   'Dunkin\'', 'Mcdonald\'s', 'Panera', 'Popeyes', 'Qdoba',
+                   'Dunkin\'', 'Mcdonald\'s', 'Panera', 'Popeyes', 'QDOBA',
                    'Taco bell', 'Wendy\'s']
 
 allNews = pd.read_json("currentNews.json")
@@ -336,7 +364,8 @@ app.layout = html.Div(
             children=[
                 html.Img(
                     src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/NRO.svg/1200px-NRO.svg.png',
-                    sizes="small", className="NRO", style={"clear": "right", "float": "right"}
+                    sizes="small", className="NRO", style={"clear": "right", ""
+                                                                             "oat": "right"}
                 ),
                 html.Img(src="static/logo.png", className='logo'
                          , style={"clear": "left", "float": "left"}),
@@ -397,7 +426,7 @@ app.layout = html.Div(
         html.Div([
              # Create element to hide/show, in this case an 'Input Component'
              dbc.Button('Download Current Chart', id='fileButton', className='fileButton',
-                        n_clicks=0, style={"clear": "right", "float": "right", 'display': 'block'}),
+                        n_clicks=0, style={"clear": "left", "float": "left", 'display': 'block'}),
              html.Span(id='outputReport'),
              dcc.Download(id='nameVsStarsDownload-csv'),
              dcc.Download(id='nameVsReviewDownload-csv'),
@@ -459,21 +488,53 @@ app.layout = html.Div(
         # Summary Stats choices
         html.Div([
             # Create element to hide/show, in this case an 'Input Component'
-            dcc.RadioItems(
+            dbc.RadioItems(
                 id='numStarsRadio',
+                className="btn-group-toggle",
+                labelClassName="btn btn-outline-secondary",
+                labelCheckedClassName="active",
                 options=[
-                    {'label': '1 Star', 'value': '1'},
-                    {'label': '2 Stars', 'value': '2'},
-                    {'label': '3 Stars', 'value': '3'},
-                    {'label': '4 Stars', 'value': '4'},
-                    {'label': '5 Stars', 'value': '5'},
+                    {"label": "Attribute Comparison By Stars", "value": 1},
+                    {"label": "Attribute Comparison By Product", "value": 2},
                 ],
-                className="radioOptions",
-                value="5", style={'display': 'block'}
-            )
+                value=1, style={'display': 'block'}
+            ),
+            html.Div(id="output2"),
         ],
+            className="summaryStatsGroup",
         ),
-        # Another chart
+
+        html.Div([
+            dcc.Dropdown(
+                    id='starsDropdown',
+                    options=[
+                        {"label": "1 Star", "value": 1},
+                        {"label": "2 Star", "value": 2},
+                        {"label": "3 Star", "value": 3},
+                        {"label": "4 Star", "value": 4},
+                        {"label": "5 Star", "value": 5},
+                    ],
+                    value=5,
+                    searchable=False,
+                    className="starsDropdown",
+                ),
+        ], ),
+        html.Div([
+            dcc.Dropdown(
+                    id='restaurantDropdown1',
+                    options=dropDownRestaurants,
+                    value='Starbucks',
+                    className="starsDropdown",
+                ),
+        ], ),
+        html.Div([
+            dcc.Dropdown(
+                    id='restaurantDropdown2',
+                    options=dropDownRestaurants,
+                    value='Starbucks',
+                    className="starsDropdown",
+                ),
+        ], ),
         html.Div(
             children=dcc.Graph(
                 id="third-chart", config={"displayModeBar": False},
@@ -523,6 +584,32 @@ app.layout = html.Div(
             ], id="card",
             className="dropAndCard"
         ),
+        html.Div(dbc.CardGroup([
+            dbc.Card(dbc.CardBody([dbc.CardImg(id="post-1-img", top=True, className="cardImg"),
+                                   html.H5(className="card-title"),
+                        html.P(id="post-1-text",className="card-text",),
+                                   ]),style={"width": "14rem"},
+            ),
+            dbc.Card(dbc.CardBody([dbc.CardImg(id="post-2-img", top=True, className="cardImg"),
+                                   html.H5(className="card-title"),
+                        html.P(id="post-2-text",className="card-text",),
+                        ]),style={"width": "14rem"},
+            ),
+            dbc.Card(dbc.CardBody([dbc.CardImg(id="post-3-img", top=True, className="cardImg"),
+                                   html.H5(className="card-title"),
+                        html.P(id="post-3-text",className="card-text",),
+                        ]),style={"width": "14rem"},
+            ),
+            ]),
+
+        id="socialMediaCards",
+        className="socialMediaCards"
+        ),
+        html.Div(html.H6(
+            id="IGFeed",
+            children="Instagram Feed",
+            className="IGFeed",
+        )),
         html.Div(children=[
             dcc.Dropdown(
                     id='productDropdown',
@@ -582,16 +669,10 @@ app.layout = html.Div(
 @app.callback(
     [Output("checkin-dates", "figure"),
      Output("checkin-days", "figure"),
-     Output("checkin-months", "figure"),
-     Output('productUsageDownload-csv', 'data'),
-     ],
+     Output("checkin-months", "figure"),],
     [Input("newsDropdown", "value"),
-     Input("checklist", "value"),
-     Input('fileButton', 'n_clicks'),
-     State("checkinToggle", "value"),
-     State('radios', 'value'),
-     ])
-def update_bar_chart(dropdown_value, state_chosen, n_clicks, checkin_value, visibility_state):
+     Input("checklist", "value")])
+def update_bar_chart(dropdown_value, state_chosen):
     # make dataframes that the buttons can update according to user requests
     fileButton = dash.callback_context
 
@@ -603,7 +684,6 @@ def update_bar_chart(dropdown_value, state_chosen, n_clicks, checkin_value, visi
     check = frequencies[[state for state in total_columns]]
     dayCheck = dayFrequencies[[state for state in total_columns]]
     monthCheck = monthFrequencies[[state for state in total_columns]]
-
     # plotly bar charts
 
     productToKeep = []
@@ -635,20 +715,17 @@ def update_bar_chart(dropdown_value, state_chosen, n_clicks, checkin_value, visi
     checkinsVsMonth.for_each_trace(lambda trace: trace.update(visible="legendonly")
                                   if trace.name not in productToKeep else ())
 
-    if visibility_state == 1 and checkin_value == 1 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        checkinsVsDate.write_image('images/checkinsVsDate.pdf')
-        return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 1)
+    with open('checkinsVsDate.pkl', 'wb') as output:
+        pickle.dump(checkinsVsDate, output, pickle.HIGHEST_PROTOCOL)
 
-    if visibility_state == 1 and checkin_value == 2 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        checkinsVsMonth.write_image('images/checkinsVsMonth.pdf')
-        return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 2)
+    with open('checkinsVsMonth.pkl', 'wb') as output:
+        pickle.dump(checkinsVsMonth, output, pickle.HIGHEST_PROTOCOL)
 
-    if visibility_state == 1 and checkin_value == 3 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        checkinsVsDay.write_image('images/checkinsVsDay.pdf')
-        return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 3)
+    with open('checkinsVsDay.pkl', 'wb') as output:
+        pickle.dump(checkinsVsDay, output, pickle.HIGHEST_PROTOCOL)
 
     # return all the charts/maps
-    return checkinsVsDate, checkinsVsMonth, checkinsVsDay, dash.no_update
+    return checkinsVsDate, checkinsVsMonth, checkinsVsDay
 
 
 # Hide map if anything but the proper radio button is selected
@@ -769,20 +846,37 @@ def display_value(checkinValue, radiosValue):
     else:
         return {'display': 'none'}
 
+# @app.callback(Output("fileButton", "style"), [Input("radios", "value")])
+# def display_value(value):
+#     if value!=2:
+#         return {'display': 'block'}
+#     else:
+#         return {'display': 'none'}
 
-# Hide download button on map page
-@app.callback(Output("fileButton", "style"), [Input("radios", "value")])
+@app.callback(Output("starsDropdown", "style"), [Input("radios", "value"), Input("numStarsRadio", "value")])
+def display_value(value, stars_or_no):
+    if value==5 and stars_or_no == 1:
+        return {}
+    else:
+        return {'display': 'none'}
+
+@app.callback(Output("restaurantDropdown1", "style"), Output("restaurantDropdown2", "style"), [Input("radios", "value"), Input("numStarsRadio", "value")])
+def display_value(value, stars_or_no):
+    if value==5 and stars_or_no == 2:
+        return {}, {}
+    else:
+        return {'display': 'none'}, {'display': 'none'}
+
+@app.callback(Output("card", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value!=2:
+    if value!=2 and value != 5 and value != 6:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
-
-# Hide card on summary stats page
-@app.callback(Output("card", "style"), [Input("radios", "value")])
+@app.callback(Output("IGFeed", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value != 5 and value != 6:
+    if value==1:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -790,12 +884,8 @@ def display_value(value):
 
 @app.callback(
     Output('bar-chart', 'figure'),
-    Output('nameVsReviewDownload-csv', 'data'),
-    [Input("checklist", "value"),
-     Input('fileButton', 'n_clicks'),
-     State('radios', 'value')])
-def makeNameVsReviewCount(state_chosen, n_clicks, visibility_state):
-    fileButton = dash.callback_context
+    [Input("checklist", "value")])
+def makeNameVsReviewCount(state_chosen):
     dff = data[data["state"].isin(state_chosen)]
     nameVsReviewCount = px.bar(dff, x="review_count", y="name", orientation='h', color="state",
                                title="Products vs. Review Count",
@@ -805,10 +895,9 @@ def makeNameVsReviewCount(state_chosen, n_clicks, visibility_state):
                                    "state": "State"
                                }
                                )
-    if visibility_state == 4 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        nameVsReviewCount.write_image('images/nameVsReviewCount.pdf')
-        return nameVsReviewCount, downloadFile(visibility_state, -1)
-    return nameVsReviewCount, dash.no_update
+    with open('nameVsReviewCount.pkl', 'wb') as output:
+        pickle.dump(nameVsReviewCount, output, pickle.HIGHEST_PROTOCOL)
+    return nameVsReviewCount
 
 
 @app.callback(
@@ -824,6 +913,8 @@ def makeMap(state_chosen):
         })
     ma.update_layout(mapbox_style="open-street-map")
     ma.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    with open('ma.pkl', 'wb') as output:
+        pickle.dump(ma, output, pickle.HIGHEST_PROTOCOL)
     return ma
 
 for n in noGood:
@@ -832,12 +923,8 @@ for n in noGood:
 
 @app.callback(
     Output('second-chart', 'figure'),
-    Output('nameVsStarsDownload-csv', 'data'),
-    [Input("checklist", "value"),
-     Input('fileButton', 'n_clicks'),
-     State('radios', 'value')])
-def makeNameVsStarsChart(state_chosen, n_clicks, visibility_state):
-    fileButton = dash.callback_context
+    [Input("checklist", "value")])
+def makeNameVsStarsChart(state_chosen):
     st = formattedStars[formattedStars["state"].isin(state_chosen)]
     nameVsStars = px.bar(st, x="stars", y="name", orientation='h',
                          color="state", barmode='group',
@@ -848,70 +935,126 @@ def makeNameVsStarsChart(state_chosen, n_clicks, visibility_state):
                              "state": "State"
                          }
                          )
-    if visibility_state == 3 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        nameVsStars.write_image('images/nameVsStars.pdf')
-        return nameVsStars, downloadFile(visibility_state, -1)
-    return nameVsStars, dash.no_update
+    with open('nameVsStars.pkl', 'wb') as output:
+        pickle.dump(nameVsStars, output, pickle.HIGHEST_PROTOCOL)
+    return nameVsStars
+
 
 
 # Radio buttons for changing stars in attribute graph
 @app.callback(
     Output('third-chart', 'figure'),
-    Output('attributeCountDownload-csv', 'data'),
-    [Input('numStarsRadio', 'value'),
+    [Input('starsDropdown', 'value'),
      Input('checklist', 'value'),
-     Input('fileButton', 'n_clicks'),
+     Input('numStarsRadio', 'value'),
+     Input('restaurantDropdown1', 'value'),
+     Input('restaurantDropdown2', 'value'),
      State('radios', 'value')])
-def update_attribute_chart(star_chosen, state_chosen, n_clicks, visibility_state):
-    fileButton = dash.callback_context
+def update_attribute_chart(star_chosen, state_chosen, version_shown, restaurant1, restaurant2, visibility_state):
     a = AttributeData()
     a.updateStates(state_chosen)
-    num_stars = 5
-    if star_chosen == '1':
-        num_stars = 1
-    elif star_chosen == '2':
-        num_stars = 2
-    elif star_chosen == '3':
-        num_stars = 3
-    elif star_chosen == '4':
-        num_stars = 4
-    a.updateStar(num_stars)
-    labels, attributesTrue, attributesFalse = a.createAttributeGraphs(False)
-    attributeCount = go.Figure(data=[
-        go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
-        go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
-    ])
-    attributeCount.update_layout(barmode='group', title='Attributes of ' + str(a.getStar()) + ' Star Products',
-                                 yaxis_title="Number of Attributes",
-                                 xaxis_title="Attributes")
-    if visibility_state == 5 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-        attributeCount.write_image('images/AttributeGraph.pdf')
-        return attributeCount, downloadFile(visibility_state, -1)
-    return attributeCount, dash.no_update
+    if version_shown == 1:
+        a.updateStar(star_chosen)
+        labels, attributesTrue, attributesFalse = a.createAttributeGraphs(False)
+        attributeCount = go.Figure(data=[
+            go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
+            go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
+        ])
+        attributeCount.update_layout(height=600, barmode='group', title='Attributes of ' + str(star_chosen) + ' Star Products',
+                                     yaxis_title="Number of Attributes",
+                                     xaxis_title="Attributes")
+        with open('attributeCount.pkl', 'wb') as output:
+            pickle.dump(attributeCount, output, pickle.HIGHEST_PROTOCOL)
+        return attributeCount
+    else:
+        a.updateRestaurant(restaurant1)
+        labels, attributesTrue, attributesFalse = a.createAttributeGraphs(True)
+        attributeCount = make_subplots(rows=2, cols=1, vertical_spacing=.3)
+
+        attributeCount.add_trace(
+                go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
+            row=1, col=1
+        )
+        attributeCount.add_trace(
+            go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
+            row=1, col=1
+        )
+
+        a.updateRestaurant(restaurant2)
+        labels, attributesTrue, attributesFalse = a.createAttributeGraphs(True)
+
+        attributeCount.add_trace(
+            go.Bar(showlegend=False, x=labels, y=attributesTrue, marker_color='darkblue'),
+            row=2, col=1
+        )
+
+        attributeCount.add_trace(
+            go.Bar(showlegend=False, x=labels, y=attributesFalse, marker_color='lightblue'),
+            row=2, col=1
+        )
+
+        attributeCount.update_layout(showlegend=True, height=1000, width=800, title_text=str(restaurant1) + " vs " + str(restaurant2))
+        with open('attributeCount.pkl', 'wb') as output:
+            pickle.dump(attributeCount, output, pickle.HIGHEST_PROTOCOL)
+    return attributeCount
+
 
 
 # download report into csv file
-def downloadFile(visibility_state, checkin_state):
+@app.callback(
+    Output('attributeCountDownload-csv', 'data'),
+    [Input('fileButton', 'n_clicks'),
+     State('radios', 'value'),
+     State("checkinToggle", "value")],
+    prevent_initial_call=True)
+def downloadFile(n_clicks, visibility_state, checkin_state):
     if visibility_state == 5:
-        return dcc.send_file('images/AttributeGraph.pdf')
+        with open('attributeCount.pkl', 'rb') as input:
+            attributeCount = pickle.load(input)
+            attributeCount.write_image('static/images/SummaryStatistics.pdf')
+        return dcc.send_file('static/images/SummaryStatistics.pdf')
     elif visibility_state == 4:
-        return dcc.send_file('images/nameVsReviewCount.pdf')
+        with open('nameVsReviewCount.pkl', 'rb') as input:
+            nameVsReviewCount = pickle.load(input)
+            nameVsReviewCount.write_image('static/images/ProductsVsReviewCount.pdf')
+        return dcc.send_file('static/images/ProductsVsReviewCount.pdf')
     elif visibility_state == 3:
-        return dcc.send_file('images/nameVsStars.pdf')
+        with open('nameVsStars.pkl', 'rb') as input:
+            nameVsStars = pickle.load(input)
+            nameVsStars.write_image('static/images/ProductsVsUserRatings.pdf')
+        return dcc.send_file('static/images/ProductsVsUserRatings.pdf')
+    elif visibility_state == 2:
+        with open('ma.pkl', 'rb') as input:
+            map = pickle.load(input)
+            map.write_image('static/images/Map.pdf')
+        return dcc.send_file('static/images/Map.pdf')
     else:
         if checkin_state == 1:
-            return dcc.send_file('images/checkinsVsDate.pdf')
+            with open('checkinsVsDate.pkl', 'rb') as input:
+                checkinsVsDate = pickle.load(input)
+                checkinsVsDate.write_image('static/images/ProductUsageAllTime.pdf')
+            return dcc.send_file('static/images/ProductUsageAllTime.pdf')
         elif checkin_state == 2:
-            return dcc.send_file('images/checkinsVsMonth.pdf')
+            with open('checkinsVsMonth.pkl', 'rb') as input:
+                checkinsVsMonth = pickle.load(input)
+                checkinsVsMonth.write_image('static/images/ProductUsageLastThreeMonths.pdf')
+            return dcc.send_file('static/images/ProductUsageLastThreeMonths.pdf')
         else:
+            with open('checkinsVsDay.pkl', 'rb') as input:
+                checkinsVsDay = pickle.load(input)
+                checkinsVsDay.write_image('static/images/ProductUsageLastThreeWeeks.pdf')
             # df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
-            return dcc.send_file('images/checkinsVsDay.pdf')
+            return dcc.send_file('static/images/ProductUsageLastThreeWeeks.pdf')
 
-
-# Call back to format and update the news API return
-@app.callback([Output("card-text", "children"),
+@app.callback([Output("post-1-text", "children"),
+               Output("post-2-text", "children"),
+               Output("post-3-text", "children"),
+               Output("card-text", "children"),
                Output("card-title", "children"),
                Output("img", "src"),
+               Output("post-1-img", "src"),
+               Output("post-2-img", "src"),
+               Output("post-3-img", "src"),
                ],
               [Input("newsDropdown", "value"),
                Input('dateRange', 'start_date'),
@@ -922,6 +1065,27 @@ def update_card_text(dropdown_value, start_date, end_date):
     source_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['source'].to_list()
     url_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['url'].to_list()
     imgList = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['imageUrl'].to_list()
+
+    post1url = "static/images/" + dropdown_value + "1" + ".png"
+    post2url = "static/images/" + dropdown_value + "2" + ".png"
+    post3url = "static/images/" + dropdown_value + "3" + ".png"
+
+    caption1 = socialMediaDFs[newsNames.index(dropdown_value)].caption.to_list()[0]
+    if(len(caption1) > 350):
+        caption1 = caption1[0:350] + "..."
+    caption1 +=" Date: "+ str(socialMediaDFs[newsNames.index(dropdown_value)].date.to_list()[0])
+
+    caption2 = socialMediaDFs[newsNames.index(dropdown_value)].caption.to_list()[1]
+    if (len(caption2) > 350):
+        caption2 = caption2[0:350] + "..."
+    caption2 += " Date: " + str(socialMediaDFs[newsNames.index(dropdown_value)].date.to_list()[1])
+
+    caption3 = socialMediaDFs[newsNames.index(dropdown_value)].caption.to_list()[2]
+    if (len(caption3) > 350):
+        caption3 = caption3[0:350] + "..."
+    caption3 += " Date: " + str(socialMediaDFs[newsNames.index(dropdown_value)].date.to_list()[2])
+
+
     try:
         correct_img = imgList[1]
     except IndexError:
@@ -932,7 +1096,8 @@ def update_card_text(dropdown_value, start_date, end_date):
     for i in range(len(article_list)):
         if start_date <= date_list[i] <= end_date:
             each_article.append(dbc.ListGroupItem(article_list[i] + ": " + "Date: " + date_list[i] + ", Source: " + source_list[i] +  ".", href=url_list[i], target="_blank"))
-    return each_article, dropdown_value, correct_img
+    return caption1, caption2, caption3, each_article, dropdown_value, correct_img, post1url, post2url, post3url
+
 
 
 # make the dropdown propagate with the trace selected on the graph
@@ -946,40 +1111,20 @@ def update_dropdown(state_chosen, overall):
         for col in frequencies.columns:
             if option in col:
                 total_columns.append(col)
-    to_return = ""
-    if total_columns[overall[1][0]]:
-        to_return = total_columns[overall[1][0]][4:]
-    return to_return
+    toReturn = "Starbucks"
+    try:
+        toReturn = total_columns[overall[1][0]][4:]
+    except TypeError:
+        print("")
+    return toReturn
 
-# @app.callback(Output("newsDropdown", "value"),
-#               [Input("checklist", "value"),
-#                Input("checkin-months", "restyleData"),
-#                ])
-# def update_dropdown(state_chosen, months):
-#     total_columns = []
-#     for option in state_chosen:
-#         for col in frequencies.columns:
-#             if option in col:
-#                 total_columns.append(col)
-#     toReturn = ""
-#     if total_columns[months[1][0]]:
-#         toReturn = total_columns[months[1][0]][4:]
-#     return toReturn
-#
-# @app.callback(Output("newsDropdown", "value"),
-#               [Input("checklist", "value"),
-#                Input("checkin-days", "restyleData"),
-#                ])
-# def update_dropdown(state_chosen, days):
-#     total_columns = []
-#     for option in state_chosen:
-#         for col in frequencies.columns:
-#             if option in col:
-#                 total_columns.append(col)
-#     toReturn = ""
-#     if total_columns[days[1][0]]:
-#         toReturn = total_columns[days[1][0]][4:]
-#     return toReturn
+@app.callback(Output("socialMediaCards", "style"), Input("radios", "value"))
+def display_value(radiosValue):
+    if radiosValue == 1:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
 
 
 # run the app at port 8080

@@ -7,9 +7,20 @@
     margin-bottom: -40px;
 }
 
+.socialMediaCards {
+    float: left;
+    clear: left;
+    margin-top: 40px;
+    margin-left: 274px;
+    margin-right: -500px;
+
+}
+
 .fileButton {
     margin-left: 40px;
     margin-top: -250px;
+    clear: left;
+    float: left;
 }
 
 @keyframes fadein {
@@ -74,9 +85,50 @@
     text-align: left;
 }
 
+.summaryStatsGroup .custom-control-input ~ .custom-control-label::before {
+  content: none;
+}
+
+.summaryStatsGroup .custom-radio .custom-control-input ~ .custom-control-label::after {
+  content: none;
+
+}
+
+/* restyle radio items */
+.summaryStatsGroup .custom-control {
+  padding-left: 2px;
+    padding-right: 2px;
+    text-align: center;
+    horiz-align: center;
+    margin-bottom: 2px;
+    position: relative;
+    display: inline;
+    left: 150px;
+}
+
+.summaryStatsGroup .summaryStatsButtons > .custom-control:not(:last-child) > .btn {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.summaryStatsGroups .summaryStatsButtons > .custom-control:not(:first-child) > .btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-left: -1px;
+}
+
+.summaryStatsButtons {
+    position: center;
+    display: inline-block;
+    margin-top: 200px;
+    margin-left: 100px;
+    text-align: center;
+}
+
 .dash-graph {
-    margin-top: -175px;
+    margin-top: -150px;
     margin-left: 250px;
+    margin-right: -200px;
 }
 .svg-container {
     margin-top: -175px;
@@ -129,7 +181,9 @@
 }
 
 .NRO {
-    margin-bottom: -45px;
+    float: right;
+    clear: right;
+    margin-bottom: -200px;
     margin-top: 30px;
     margin-right: 20px;
     width: 80px;
@@ -194,11 +248,23 @@
     padding-left: 10px;
 }
 
+.starsDropdown {
+    /*clear: bottom;*/
+    /*float: bottom;*/
+    /*right: -100px;*/
+    left: 800px;
+    /*width: 240px;*/
+    display: inline-block;
+    /*text-align: left;*/
+    position: relative;
+    /*margin-bottom: -10px;*/
+}
+
 .dropAndCard {
     float: right;
     clear: right;
     margin-right: 40px;
-    margin-left: -400px;
+    margin-left: -800px;
     margin-top: -600px;
 }
 
@@ -225,6 +291,14 @@
 .cardImg {
     height: 150px;
     /*object-fit: contain;*/
+}
+
+.IGFeed {
+    margin-top: 493px;
+    margin-left: 505px;
+    margin-right: -200px;
+    font-size: 30px;
+    color: #F0FFFF;
 }
 
 .card {
