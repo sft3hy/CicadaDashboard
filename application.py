@@ -716,7 +716,7 @@ def display_value(value, stars_or_no):
 
 @app.callback(Output("card", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value!=2 or value != 5:
+    if value!=2 and value != 5:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
