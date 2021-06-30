@@ -542,6 +542,7 @@ app.layout = html.Div(
                  ), ],
                 style={"width": "16rem"},
                 className="card-place"
+            #     This is annoying
             ),
             ],
             id="productCard",
