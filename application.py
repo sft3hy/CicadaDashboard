@@ -660,7 +660,6 @@ app.layout = html.Div(
             className="dropAndCardUser"
         ),
     ],
-    # Merge
     className="background"
 )
 
