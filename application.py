@@ -79,6 +79,17 @@ data = data.replace({'Chipotle Mexican Grill': 'Chipotle', 'QDOBA Mexican Eats':
 # with open("checkin.json", 'w', encoding="UTF-8") as f:
 #     json.dump(cData, f)
 
+# with open("UsersToTrack.json", encoding="UTF-8") as f:
+#     uData = json.load(f)
+#
+# for user in uData:
+#     del user['address']
+#     del user['city']
+#     del user['postal_code']
+#
+# with open("usersToTrack.json", 'w', encoding="UTF-8") as f:
+#     json.dump(uData, f)
+
 
 # formatting stuff
 # how to run an app with dash/plotly
@@ -113,6 +124,23 @@ map.update_layout(
     geo_scope='usa'
 )
 
+# alex = pd.read_json("userAlexandra.json")
+# dan = pd.read_json("userDaniel.json")
+# vince = pd.read_json("userVincent.json")
+
+# userMap = go.Figure(data=go.Scattergeo(
+#     lon=alex['longitude'],
+#     lat=alex['latitude'],
+#     text=alex['name_user'],
+#     mode='markers',
+#     marker_color=alex['date']
+# ))
+#
+# # limit the map to only the USA
+# userMap.update_layout(
+#     geo_scope='usa'
+# )
+
 # format to get a nice table of states, names, and stars, grouped by  state
 stars = pd.read_json("starsData.json")
 s = stars.groupby(['state', 'name']).agg({'stars': ['mean']}).reset_index()
@@ -144,6 +172,14 @@ for n in nams:
 mapDF = pd.DataFrame(list(zip(namsNStarsList, la, lo, sta, tars, nams, id, coun)),
                      columns=['nameNStars', 'latitude', 'longitude', 'state', 'stars', 'name', 'business_id',
                               'review_count'])
+
+
+userAlexData = pd.read_json("userAlexandra.json")
+elite = userAlexData.elite.to_list()
+revCo = userAlexData.review_count.to_list()
+yelpS = userAlexData.yelping_since.to_list()
+
+
 
 # format a table to match check ins to business name using business_id
 checkins = pd.read_json("checkin.json")
@@ -291,9 +327,11 @@ for r in newsDF.restaurant.unique():
     dropDownRestaurants.append({"label": r, 'value': r})
 correct_img = ""
 
+
 # the main meat of the display, all in this weird html/python hybrid (it's how dash works)
 app.layout = html.Div(
     children=[
+        # Header of Dashboard
         html.Div(
             children=[
                 html.Img(
@@ -310,6 +348,7 @@ app.layout = html.Div(
             ],
             className="header-title",
         ),
+        # Radio buttons to choose state
         html.Div(
             children=[
                 html.Div(
@@ -331,6 +370,7 @@ app.layout = html.Div(
             ],
             className="menu",
         ),
+        # Radio Buttons to choose what analytics to view
         html.Div(
             [
                 dbc.RadioItems(
@@ -345,6 +385,7 @@ app.layout = html.Div(
                         {"label": "Products vs. User Ratings", "value": 3},
                         {"label": "Products vs. Review Count", "value": 4},
                         {"label": "Summary Statistics", "value": 5},
+                        {"label": "User Tracking", "value": 6},
                     ],
                     value=2,
                 ),
@@ -352,6 +393,7 @@ app.layout = html.Div(
             ],
             className="radio-group",
         ),
+        # Downloads
         html.Div([
              # Create element to hide/show, in this case an 'Input Component'
              dbc.Button('Download Current Chart', id='fileButton', className='fileButton',
@@ -363,6 +405,7 @@ app.layout = html.Div(
              dcc.Download(id='productUsageDownload-csv'),
          ],
         ),
+        # Toggle checkin view buttons
         html.Div(children=dcc.RadioItems(
             id='checkinToggle',
             options=[
@@ -373,41 +416,47 @@ app.layout = html.Div(
             className="radioOptions",
             value=1, style={'display': 'block'}
         )),
+        # Checkin all time graph
         html.Div(children=dcc.Graph(
             id="checkin-dates", config={"displayModeBar": False},
         ),
             className="wrapper", style={'display': 'block'}
         ),
+        # Checkin Week graph
         html.Div(children=dcc.Graph(
             id="checkin-days", config={"displayModeBar": False},
         ),
             className="wrapper", style={'display': 'block'}
         ),
+        # Checkin Month Graph
         html.Div(children=dcc.Graph(
             id="checkin-months", config={"displayModeBar": False},
         ),
             className="wrapper", style={'display': 'block'}
         ),
+        # Some bar chart
         html.Div(children=dcc.Graph(
             id="bar-chart", config={"displayModeBar": False},
         ),
             className="wrapper", style={'display': 'block'}
         ),
+        # Map
         html.Div(children=[html.Div(
             children=dcc.Graph(
                 id='ma',
                 figure=map,
             ),
             className="wrapper", style={'display': 'block'}
+        ), ],
         ),
-        ],
-        ),
+        # ANother random chart
         html.Div(
             children=dcc.Graph(
                 id="second-chart", config={"displayModeBar": False},
             ),
             className="wrapper", style={'display': 'block'}
         ),
+        # Summary Stats choices
         html.Div([
             # Create element to hide/show, in this case an 'Input Component'
             dcc.RadioItems(
@@ -424,13 +473,23 @@ app.layout = html.Div(
             )
         ],
         ),
-
+        # Another chart
         html.Div(
             children=dcc.Graph(
                 id="third-chart", config={"displayModeBar": False},
             ),
             className="wrapper", style={'display': 'block'}
         ),
+        # UserMap
+        html.Div(children=[html.Div(
+            children=dcc.Graph(
+                id='userMap',
+                figure=map,
+            ),
+            className="wrapper", style={'display': 'block'}
+        ), ],
+        ),
+        # News API and dropdowns
         html.Div(children=[
             dcc.Dropdown(
                     id='newsDropdown',
@@ -463,6 +522,54 @@ app.layout = html.Div(
             ),
             ], id="card",
             className="dropAndCard"
+        ),
+        html.Div(children=[
+            dcc.Dropdown(
+                    id='productDropdown',
+                    options=dropDownRestaurants,
+                    placeholder="Select a Product",
+                    className="restaurantDropdown",
+                ),
+            dbc.Card([
+                 dbc.CardBody(
+                     [
+                         html.H4(className="card-title", id="product-title"),
+                         html.P(
+                             className="card-text",
+                             id="product-text",
+                         ),
+                     ]
+                 ), ],
+                style={"width": "16rem"},
+                className="card-place"
+            ),
+            ],
+            id="productCard",
+            className="dropAndCardProduct"
+        ),
+        html.Div(children=[
+            dcc.Dropdown(
+                    id='userDropdown',
+                    options=dropDownRestaurants,
+                    placeholder="Select a User",
+                    className="restaurantDropdown",
+                ),
+            dbc.Card([
+                 dbc.CardBody(
+                     [
+                         html.H4(className="card-title", id="user-title"),
+                         html.P(
+                             className="card-text",
+                             id="user-text",
+                         ),
+                     ]
+                 ), ],
+                style={"width": "16rem"},
+                className="card-place"
+            ),
+            ],
+            id="userCard",
+            className="dropAndCardUser"
         ),
     ],
 
@@ -519,7 +626,6 @@ def update_bar_chart(dropdown_value, state_chosen, n_clicks, checkin_value, visi
     checkinsVsDay.for_each_trace(lambda trace: trace.update(visible="legendonly")
                                   if trace.name not in productToKeep else ())
 
-
     checkinsVsMonth = px.line(monthCheck, x=monthCheck.index, title="Product Usage Last Three Months - Click restaurants on the right to view",
                               y=total_columns,
                               labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
@@ -527,7 +633,6 @@ def update_bar_chart(dropdown_value, state_chosen, n_clicks, checkin_value, visi
 
     checkinsVsMonth.for_each_trace(lambda trace: trace.update(visible="legendonly")
                                   if trace.name not in productToKeep else ())
-
 
     if visibility_state == 1 and checkin_value == 1 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
         checkinsVsDate.write_image('images/checkinsVsDate.pdf')
@@ -545,6 +650,7 @@ def update_bar_chart(dropdown_value, state_chosen, n_clicks, checkin_value, visi
     return checkinsVsDate, checkinsVsMonth, checkinsVsDay, dash.no_update
 
 
+# Hide map if anything but the proper radio button is selected
 @app.callback(Output("ma", "style"), [Input("radios", "value")])
 def display_value(value):
     if value == 2:
@@ -553,6 +659,7 @@ def display_value(value):
         return {'display': 'none'}
 
 
+# Hide chart if anything but the proper radio button is selected
 @app.callback(Output("second-chart", "style"), [Input("radios", "value")])
 def display_value(value):
     if value == 3:
@@ -561,6 +668,7 @@ def display_value(value):
         return {'display': 'none'}
 
 
+# Hide chart if anything but the proper radio button is selected
 @app.callback(Output("bar-chart", "style"), [Input("radios", "value")])
 def display_value(value):
     if value == 4:
@@ -569,6 +677,7 @@ def display_value(value):
         return {'display': 'none'}
 
 
+# Hide chart if anything but the proper radio button is selected
 @app.callback(Output("third-chart", "style"), [Input("radios", "value")])
 def display_value(value):
     if value == 5:
@@ -577,6 +686,7 @@ def display_value(value):
         return {'display': 'none'}
 
 
+# Hide summary Stats selection if anything but the proper radio button is selected
 @app.callback(Output("numStarsRadio", "style"), [Input("radios", "value")])
 def display_value(value):
     if value == 5:
@@ -585,6 +695,7 @@ def display_value(value):
         return {'display': 'none'}
 
 
+# Hide or show checkin charts if chosen
 @app.callback(Output("checkinToggle", "style"), [Input("radios", "value")])
 def display_value(value):
     if value == 1:
@@ -593,6 +704,45 @@ def display_value(value):
         return {'display': 'none'}
 
 
+# Displays User Tracking Map
+@app.callback(Output("userMap", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value == 6:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+# Displays User Tracking Map
+@app.callback(Output("productCard", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value == 6:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(
+    Output("userCard", "style"),
+    [Input("radios", "value"), Input("productDropdown", "value"),
+     ])
+def display_value(value, contents):
+    if value == 6 and contents:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+# Displays User Tracking Map
+@app.callback(Output("checklist", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value != 6:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+# Hide checkin chart if different time frame is chosen
 @app.callback(Output("checkin-dates", "style"), [Input("checkinToggle", "value"), Input("radios", "value")])
 def display_value(checkinValue, radiosValue):
     if checkinValue == 1 and radiosValue == 1:
@@ -601,6 +751,7 @@ def display_value(checkinValue, radiosValue):
         return {'display': 'none'}
 
 
+# Hide checkin chart if different time frame is chosen
 @app.callback(Output("checkin-months", "style"), [Input("checkinToggle", "value"), Input("radios", "value")])
 def display_value(checkinValue, radiosValue):
     if checkinValue == 3 and radiosValue == 1:
@@ -609,6 +760,7 @@ def display_value(checkinValue, radiosValue):
         return {'display': 'none'}
 
 
+# Hide checkin chart if different time frame is chosen
 @app.callback(Output("checkin-days", "style"), [Input("checkinToggle", "value"), Input("radios", "value")])
 def display_value(checkinValue, radiosValue):
     if checkinValue == 2 and radiosValue == 1:
@@ -616,6 +768,8 @@ def display_value(checkinValue, radiosValue):
     else:
         return {'display': 'none'}
 
+
+# Hide download button on map page
 @app.callback(Output("fileButton", "style"), [Input("radios", "value")])
 def display_value(value):
     if value!=2:
@@ -623,9 +777,11 @@ def display_value(value):
     else:
         return {'display': 'none'}
 
+
+# Hide card on summary stats page
 @app.callback(Output("card", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value != 5:
+    if value != 5 and value != 6:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -671,6 +827,7 @@ def makeMap(state_chosen):
 
 for n in noGood:
     formattedStars = formattedStars[formattedStars.name != n]
+
 
 @app.callback(
     Output('second-chart', 'figure'),
@@ -731,8 +888,8 @@ def update_attribute_chart(star_chosen, state_chosen, n_clicks, visibility_state
         return attributeCount, downloadFile(visibility_state, -1)
     return attributeCount, dash.no_update
 
-# download report into csv file
 
+# download report into csv file
 def downloadFile(visibility_state, checkin_state):
     if visibility_state == 5:
         return dcc.send_file('images/AttributeGraph.pdf')
@@ -750,8 +907,7 @@ def downloadFile(visibility_state, checkin_state):
             return dcc.send_file('images/checkinsVsDay.pdf')
 
 
-
-
+# Call back to format and update the news API return
 @app.callback([Output("card-text", "children"),
                Output("card-title", "children"),
                Output("img", "src"),
@@ -777,6 +933,7 @@ def update_card_text(dropdown_value, start_date, end_date):
             each_article.append(dbc.ListGroupItem(article_list[i] + ": " + "Date: " + date_list[i] + ", Source: " + source_list[i] +  ".", href=url_list[i], target="_blank"))
     return each_article, dropdown_value, correct_img
 
+
 # make the dropdown propagate with the trace selected on the graph
 @app.callback(Output("newsDropdown", "value"),
               [Input("checklist", "value"),
@@ -788,10 +945,10 @@ def update_dropdown(state_chosen, overall):
         for col in frequencies.columns:
             if option in col:
                 total_columns.append(col)
-    toReturn = ""
+    to_return = ""
     if total_columns[overall[1][0]]:
-        toReturn = total_columns[overall[1][0]][4:]
-    return toReturn
+        to_return = total_columns[overall[1][0]][4:]
+    return to_return
 
 # @app.callback(Output("newsDropdown", "value"),
 #               [Input("checklist", "value"),

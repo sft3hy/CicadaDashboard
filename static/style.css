@@ -201,6 +201,22 @@
     margin-top: -600px;
 }
 
+.dropAndCardProduct {
+    float: right;
+    clear: right;
+    margin-right: 325px;
+    margin-left: -400px;
+    margin-top: -320px;
+}
+
+.dropAndCardUser {
+    float: right;
+    clear: right;
+    margin-right: 50px;
+    margin-left: -400px;
+    margin-top: -320px;
+}
+
 .card-body {
     margin-left: 20px;
 }
