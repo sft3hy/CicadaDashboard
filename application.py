@@ -7,16 +7,38 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input, State
+import requests
 from datetime import date
 import re
 import json
 from sampleData import AttributeData
 import os
 
+# instagram dataframes
+instaNames = ["starbucks", "burgerking", "chickfila", "chipotle", "dunkin", "mcdonalds",
+              "panera", "popeyes", "qdoba", "tacobell", "wendys"]
+newsNames = ["Starbucks", "Burger King", "Chick-fil-A", "Chipotle", "Dunkin'", "McDonald's", "Panera",
+             "Popeyes", "Qdoba", "Taco Bell", "Wendy's"]
+socialMediaDFs = []
 
+for n in instaNames:
+    tempDF = pd.read_json("socialMediaJson/" + n + ".json")
+    socialMediaDFs.append(tempDF)
 
-if not os.path.exists("images"):
-    os.mkdir("images")
+# save social media images to files
+# i = 0
+# for l in socialMediaDFs:
+#     j = 1
+#     for ur in l.url:
+#         response = requests.get(ur)
+#         file = open("images/"+newsNames[i]+str(j)+".png", "wb")
+#         file.write(response.content)
+#         file.close()
+#         j+=1
+#     i+=1
+
+if not os.path.exists("static/images"):
+    os.mkdir("static/images")
 
 # pd print settings
 pd.set_option('display.max_columns', None)
@@ -25,13 +47,17 @@ pd.set_option('display.max_rows', None)
 # reads in the json
 data = pd.read_json("finalBusinessData.json")
 
-noGood = ['Dunkin\' Donuts', 'Dunkin\' Donuts & Baskin-Robbins', 'Taco Bella\'s', 'Taco Bell Cantina',
-          'Taco Bell and KFC', 'Burger King Restaurant', 'Chipotle Mexican Grill - Austin', 'Starbucks Reserve',
-          'Starbucks Florida Hotel', 'Starbucks - The Independent', 'Starbucks Coffee', 'Starbucks Coffee Company']
+noGood = ['Dunkin\' Donuts', 'Dunkin\' Donuts & Baskin-Robbins', 'Taco Bella\'s', 'Wendy\'s '
+          'Taco Bell Cantina', 'Starbucks ', 'Taco Bell and KFC', 'Burger King Restaurant',
+          'Chipotle Mexican Grill - Austin', 'Starbucks Reserve', 'Starbucks Florida Hotel',
+          'Starbucks - The Independent', 'Starbucks Coffee', 'Starbucks Coffee Company',
+          'Kentucky Fried Chicken', "Dunkin'  Donuts", "Wendy's "]
+
+replacements = {'Chipotle Mexican Grill': 'Chipotle', 'QDOBA Mexican Eats': 'QDOBA', 'Popeyes Louisiana Kitchen': 'Popeyes', 'Panera Bread': 'Panera'}
+
 for n in noGood:
     data = data[data.name != n]
-data = data.replace({'Chipotle Mexican Grill': 'Chipotle', 'QDOBA Mexican Eats': 'QDOBA', 'Popeyes Louisiana Kitchen': 'Popeyes'})
-
+data = data.replace(replacements)
 
 # # get smaller table to work with average stars
 # with open("finalBusinessData.json", encoding="UTF-8") as f:
@@ -123,7 +149,7 @@ namesList = s.name.to_list()
 
 formattedStars = pd.DataFrame(
     list(zip(starsList, statesList, namesList)), columns=['stars', 'state', 'name'])
-formattedStars = formattedStars.replace({'Chipotle Mexican Grill': 'Chipotle', 'QDOBA Mexican Eats': 'QDOBA', 'Popeyes Louisiana Kitchen': 'Popeyes'})
+formattedStars = formattedStars.replace(replacements)
 
 # format map points to show stars and business name
 mapData = pd.read_json("mapData.json")
@@ -159,7 +185,7 @@ finalCheckins = nameAndCheckin[['name_x', 'date', 'state_x']]
 finalCheckins = finalCheckins[finalCheckins["date"] != "None"]
 finalCheckins = finalCheckins.dropna()
 finalCheckins = finalCheckins.groupby(['state_x', 'name_x'])['date'].apply(', '.join).reset_index()
-finalCheckins = finalCheckins.replace({'Chipotle Mexican Grill': 'Chipotle', 'QDOBA Mexican Eats': 'QDOBA', 'Popeyes Louisiana Kitchen': 'Popeyes'})
+finalCheckins = finalCheckins.replace(replacements)
 
 
 datesList = finalCheckins.date.to_list()
@@ -256,7 +282,7 @@ monthFrequencies = monthFrequencies.sort_index()
 monthFrequencies = monthFrequencies.fillna(0)
 #
 restaurantsList = ['Starbucks', 'Burger King', 'Chick-fil-A', 'Chipotle',
-                   'Dunkin\'', 'Mcdonald\'s', 'Panera', 'Popeyes', 'Qdoba',
+                   'Dunkin\'', 'Mcdonald\'s', 'Panera', 'Popeyes', 'QDOBA',
                    'Taco bell', 'Wendy\'s']
 
 allNews = pd.read_json("currentNews.json")
@@ -298,7 +324,8 @@ app.layout = html.Div(
             children=[
                 html.Img(
                     src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/NRO.svg/1200px-NRO.svg.png',
-                    sizes="small", className="NRO", style={"clear": "right", "float": "right"}
+                    sizes="small", className="NRO", style={"clear": "right", ""
+                                                                             "oat": "right"}
                 ),
                 html.Img(src="static/logo.png", className='logo'
                          , style={"clear": "left", "float": "left"}),
@@ -388,6 +415,7 @@ app.layout = html.Div(
         ),
             className="wrapper", style={'display': 'block'}
         ),
+
         html.Div(children=dcc.Graph(
             id="bar-chart", config={"displayModeBar": False},
         ),
@@ -464,6 +492,32 @@ app.layout = html.Div(
             ], id="card",
             className="dropAndCard"
         ),
+        html.Div(dbc.CardGroup([
+            dbc.Card(dbc.CardBody([dbc.CardImg(id="post-1-img", top=True, className="cardImg"),
+                                   html.H5(className="card-title"),
+                        html.P(id="post-1-text",className="card-text",),
+                                   ]),style={"width": "14rem"},
+            ),
+            dbc.Card(dbc.CardBody([dbc.CardImg(id="post-2-img", top=True, className="cardImg"),
+                                   html.H5(className="card-title"),
+                        html.P(id="post-2-text",className="card-text",),
+                        ]),style={"width": "14rem"},
+            ),
+            dbc.Card(dbc.CardBody([dbc.CardImg(id="post-3-img", top=True, className="cardImg"),
+                                   html.H5(className="card-title"),
+                        html.P(id="post-3-text",className="card-text",),
+                        ]),style={"width": "14rem"},
+            ),
+            ]),
+
+        id="socialMediaCards",
+        className="socialMediaCards"
+        ),
+        html.Div(html.H6(
+            id="IGFeed",
+            children="Instagram Feed",
+            className="IGFeed",
+        )),
     ],
 
     className="background"
@@ -495,7 +549,6 @@ def update_bar_chart(dropdown_value, state_chosen, n_clicks, checkin_value, visi
     check = frequencies[[state for state in total_columns]]
     dayCheck = dayFrequencies[[state for state in total_columns]]
     monthCheck = monthFrequencies[[state for state in total_columns]]
-
     # plotly bar charts
 
     productToKeep = []
@@ -623,6 +676,13 @@ def display_value(value):
     else:
         return {'display': 'none'}
 
+@app.callback(Output("IGFeed", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value==1:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
 @app.callback(Output("card", "style"), [Input("radios", "value")])
 def display_value(value):
     if value != 5:
@@ -695,7 +755,6 @@ def makeNameVsStarsChart(state_chosen, n_clicks, visibility_state):
         return nameVsStars, downloadFile(visibility_state, -1)
     return nameVsStars, dash.no_update
 
-
 # Radio buttons for changing stars in attribute graph
 @app.callback(
     Output('third-chart', 'figure'),
@@ -735,26 +794,30 @@ def update_attribute_chart(star_chosen, state_chosen, n_clicks, visibility_state
 
 def downloadFile(visibility_state, checkin_state):
     if visibility_state == 5:
-        return dcc.send_file('images/AttributeGraph.pdf')
+        return dcc.send_file('static/images/AttributeGraph.pdf')
     elif visibility_state == 4:
-        return dcc.send_file('images/nameVsReviewCount.pdf')
+        return dcc.send_file('static/images/nameVsReviewCount.pdf')
     elif visibility_state == 3:
-        return dcc.send_file('images/nameVsStars.pdf')
+        return dcc.send_file('static/images/nameVsStars.pdf')
     else:
         if checkin_state == 1:
-            return dcc.send_file('images/checkinsVsDate.pdf')
+            return dcc.send_file('static/images/checkinsVsDate.pdf')
         elif checkin_state == 2:
-            return dcc.send_file('images/checkinsVsMonth.pdf')
+            return dcc.send_file('static/images/checkinsVsMonth.pdf')
         else:
             # df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
-            return dcc.send_file('images/checkinsVsDay.pdf')
+            return dcc.send_file('static/images/checkinsVsDay.pdf')
 
 
-
-
-@app.callback([Output("card-text", "children"),
+@app.callback([Output("post-1-text", "children"),
+               Output("post-2-text", "children"),
+               Output("post-3-text", "children"),
+               Output("card-text", "children"),
                Output("card-title", "children"),
                Output("img", "src"),
+               Output("post-1-img", "src"),
+               Output("post-2-img", "src"),
+               Output("post-3-img", "src"),
                ],
               [Input("newsDropdown", "value"),
                Input('dateRange', 'start_date'),
@@ -765,6 +828,27 @@ def update_card_text(dropdown_value, start_date, end_date):
     source_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['source'].to_list()
     url_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['url'].to_list()
     imgList = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['imageUrl'].to_list()
+
+    post1url = "static/images/" + dropdown_value + "1" + ".png"
+    post2url = "static/images/" + dropdown_value + "2" + ".png"
+    post3url = "static/images/" + dropdown_value + "3" + ".png"
+
+    caption1 = socialMediaDFs[newsNames.index(dropdown_value)].caption.to_list()[0]
+    if(len(caption1) > 350):
+        caption1 = caption1[0:350] + "..."
+    caption1 +=" Date: "+ str(socialMediaDFs[newsNames.index(dropdown_value)].date.to_list()[0])
+
+    caption2 = socialMediaDFs[newsNames.index(dropdown_value)].caption.to_list()[1]
+    if (len(caption2) > 350):
+        caption2 = caption2[0:350] + "..."
+    caption2 += " Date: " + str(socialMediaDFs[newsNames.index(dropdown_value)].date.to_list()[1])
+
+    caption3 = socialMediaDFs[newsNames.index(dropdown_value)].caption.to_list()[2]
+    if (len(caption3) > 350):
+        caption3 = caption3[0:350] + "..."
+    caption3 += " Date: " + str(socialMediaDFs[newsNames.index(dropdown_value)].date.to_list()[2])
+
+
     try:
         correct_img = imgList[1]
     except IndexError:
@@ -775,7 +859,8 @@ def update_card_text(dropdown_value, start_date, end_date):
     for i in range(len(article_list)):
         if start_date <= date_list[i] <= end_date:
             each_article.append(dbc.ListGroupItem(article_list[i] + ": " + "Date: " + date_list[i] + ", Source: " + source_list[i] +  ".", href=url_list[i], target="_blank"))
-    return each_article, dropdown_value, correct_img
+    return caption1, caption2, caption3, each_article, dropdown_value, correct_img, post1url, post2url, post3url
+
 
 # make the dropdown propagate with the trace selected on the graph
 @app.callback(Output("newsDropdown", "value"),
@@ -788,40 +873,20 @@ def update_dropdown(state_chosen, overall):
         for col in frequencies.columns:
             if option in col:
                 total_columns.append(col)
-    toReturn = ""
-    if total_columns[overall[1][0]]:
+    toReturn = "Starbucks"
+    try:
         toReturn = total_columns[overall[1][0]][4:]
+    except TypeError:
+        print("")
     return toReturn
 
-# @app.callback(Output("newsDropdown", "value"),
-#               [Input("checklist", "value"),
-#                Input("checkin-months", "restyleData"),
-#                ])
-# def update_dropdown(state_chosen, months):
-#     total_columns = []
-#     for option in state_chosen:
-#         for col in frequencies.columns:
-#             if option in col:
-#                 total_columns.append(col)
-#     toReturn = ""
-#     if total_columns[months[1][0]]:
-#         toReturn = total_columns[months[1][0]][4:]
-#     return toReturn
-#
-# @app.callback(Output("newsDropdown", "value"),
-#               [Input("checklist", "value"),
-#                Input("checkin-days", "restyleData"),
-#                ])
-# def update_dropdown(state_chosen, days):
-#     total_columns = []
-#     for option in state_chosen:
-#         for col in frequencies.columns:
-#             if option in col:
-#                 total_columns.append(col)
-#     toReturn = ""
-#     if total_columns[days[1][0]]:
-#         toReturn = total_columns[days[1][0]][4:]
-#     return toReturn
+@app.callback(Output("socialMediaCards", "style"), Input("radios", "value"))
+def display_value(radiosValue):
+    if radiosValue == 1:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
 
 
 # run the app at port 8080

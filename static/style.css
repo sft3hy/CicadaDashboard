@@ -7,6 +7,15 @@
     margin-bottom: -40px;
 }
 
+.socialMediaCards {
+    float: left;
+    clear: left;
+    margin-top: 40px;
+    margin-left: 274px;
+    margin-right: -500px;
+
+}
+
 .fileButton {
     margin-left: 40px;
     margin-top: -250px;
@@ -76,6 +85,7 @@
 .dash-graph {
     margin-top: -175px;
     margin-left: 250px;
+    margin-right: -200px;
 }
 .svg-container {
     margin-top: -175px;
@@ -128,7 +138,9 @@
 }
 
 .NRO {
-    margin-bottom: -45px;
+    float: right;
+    clear: right;
+    margin-bottom: -200px;
     margin-top: 30px;
     margin-right: 20px;
     width: 80px;
@@ -197,7 +209,7 @@
     float: right;
     clear: right;
     margin-right: 40px;
-    margin-left: -400px;
+    margin-left: -800px;
     margin-top: -600px;
 }
 
@@ -208,6 +220,14 @@
 .cardImg {
     height: 150px;
     /*object-fit: contain;*/
+}
+
+.IGFeed {
+    margin-top: 470px;
+    margin-left: 510px;
+    margin-right: -200px;
+    font-size: 30px;
+    color: #F0FFFF;
 }
 
 .card {
