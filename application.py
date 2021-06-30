@@ -7,6 +7,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input, State
+import requests
+from datetime import date
 from plotly.subplots import make_subplots
 import re
 import json
@@ -14,18 +16,50 @@ from sampleData import AttributeData
 import os
 import pickle
 
+# instagram dataframes
+instaNames = ["starbucks", "burgerking", "chickfila", "chipotle", "dunkin", "mcdonalds",
+              "panera", "popeyes", "qdoba", "tacobell", "wendys"]
+newsNames = ["Starbucks", "Burger King", "Chick-fil-A", "Chipotle", "Dunkin'", "McDonald's", "Panera",
+             "Popeyes", "Qdoba", "Taco Bell", "Wendy's"]
+socialMediaDFs = []
 
+for n in instaNames:
+    tempDF = pd.read_json("socialMediaJson/" + n + ".json")
+    socialMediaDFs.append(tempDF)
 
-if not os.path.exists("images"):
-    os.mkdir("images")
+# save social media images to files
+# i = 0
+# for l in socialMediaDFs:
+#     j = 1
+#     for ur in l.url:
+#         response = requests.get(ur)
+#         file = open("images/"+newsNames[i]+str(j)+".png", "wb")
+#         file.write(response.content)
+#         file.close()
+#         j+=1
+#     i+=1
 
-attributeCount = ''
+if not os.path.exists("static/images"):
+    os.mkdir("static/images")
+
 # pd print settings
-# pd.set_option('display.max_columns', None)
-# pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
 
 # reads in the json
 data = pd.read_json("finalBusinessData.json")
+
+noGood = ['Dunkin\' Donuts', 'Dunkin\' Donuts & Baskin-Robbins', 'Taco Bella\'s', 'Wendy\'s '
+          'Taco Bell Cantina', 'Starbucks ', 'Taco Bell and KFC', 'Burger King Restaurant',
+          'Chipotle Mexican Grill - Austin', 'Starbucks Reserve', 'Starbucks Florida Hotel',
+          'Starbucks - The Independent', 'Starbucks Coffee', 'Starbucks Coffee Company',
+          'Kentucky Fried Chicken', "Dunkin'  Donuts", "Wendy's "]
+
+replacements = {'Chipotle Mexican Grill': 'Chipotle', 'QDOBA Mexican Eats': 'QDOBA', 'Popeyes Louisiana Kitchen': 'Popeyes', 'Panera Bread': 'Panera'}
+
+for n in noGood:
+    data = data[data.name != n]
+data = data.replace(replacements)
 
 # # get smaller table to work with average stars
 # with open("finalBusinessData.json", encoding="UTF-8") as f:
@@ -117,6 +151,7 @@ namesList = s.name.to_list()
 
 formattedStars = pd.DataFrame(
     list(zip(starsList, statesList, namesList)), columns=['stars', 'state', 'name'])
+formattedStars = formattedStars.replace(replacements)
 
 # format map points to show stars and business name
 mapData = pd.read_json("mapData.json")
@@ -142,6 +177,9 @@ mapDF = pd.DataFrame(list(zip(namsNStarsList, la, lo, sta, tars, nams, id, coun)
 checkins = pd.read_json("checkin.json")
 goodIDs = mapDF.business_id.to_list()
 
+for n in noGood:
+    checkins = checkins[checkins.name != n]
+
 goodCheckins = checkins[checkins.business_id.isin(goodIDs)]
 nameAndCheckin = mapDF.merge(goodCheckins, on="business_id")
 
@@ -149,6 +187,8 @@ finalCheckins = nameAndCheckin[['name_x', 'date', 'state_x']]
 finalCheckins = finalCheckins[finalCheckins["date"] != "None"]
 finalCheckins = finalCheckins.dropna()
 finalCheckins = finalCheckins.groupby(['state_x', 'name_x'])['date'].apply(', '.join).reset_index()
+finalCheckins = finalCheckins.replace(replacements)
+
 
 datesList = finalCheckins.date.to_list()
 
@@ -244,7 +284,7 @@ monthFrequencies = monthFrequencies.sort_index()
 monthFrequencies = monthFrequencies.fillna(0)
 #
 restaurantsList = ['Starbucks', 'Burger King', 'Chick-fil-A', 'Chipotle',
-                   'Dunkin\'', 'Mcdonald\'s', 'Panera', 'Popeyes', 'Qdoba',
+                   'Dunkin\'', 'Mcdonald\'s', 'Panera', 'Popeyes', 'QDOBA',
                    'Taco bell', 'Wendy\'s']
 
 allNews = pd.read_json("currentNews.json")
@@ -286,7 +326,8 @@ app.layout = html.Div(
             children=[
                 html.Img(
                     src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/NRO.svg/1200px-NRO.svg.png',
-                    sizes="small", className="NRO", style={"clear": "right", "float": "right"}
+                    sizes="small", className="NRO", style={"clear": "right", ""
+                                                                             "oat": "right"}
                 ),
                 html.Img(src="static/logo.png", className='logo'
                          , style={"clear": "left", "float": "left"}),
@@ -376,6 +417,7 @@ app.layout = html.Div(
         ),
             className="wrapper", style={'display': 'block'}
         ),
+
         html.Div(children=dcc.Graph(
             id="bar-chart", config={"displayModeBar": False},
         ),
@@ -451,16 +493,22 @@ app.layout = html.Div(
             ),
             className="wrapper", style={'display': 'block'}
         ),
-        html.Div([
+        html.Div(children=[
             dcc.Dropdown(
                     id='newsDropdown',
                     options=dropDownRestaurants,
                     value='Starbucks',
                     className="restaurantDropdown",
                 ),
-        ], ),
-        html.Div(
-            children=[dbc.Card(
+            dcc.DatePickerRange(
+                id="dateRange",
+                clearable=True,
+                with_portal=True,
+                start_date="2021-06-01",
+                end_date="2021-06-30",
+                display_format="YYYY-MM-DD",
+            ),
+            dbc.Card(
                 [dbc.CardImg(id="img", top=True, className="cardImg"),
                  dbc.CardBody(
                      [
@@ -468,15 +516,42 @@ app.layout = html.Div(
                          html.P(
                              className="card-text",
                              id="card-text",
-
                          ),
                      ]
                  ),
                  ],
                 style={"width": "20rem"},
+                className="card-place"
             ),
-            ], id='card',
+            ], id="card",
+            className="dropAndCard"
         ),
+        html.Div(dbc.CardGroup([
+            dbc.Card(dbc.CardBody([dbc.CardImg(id="post-1-img", top=True, className="cardImg"),
+                                   html.H5(className="card-title"),
+                        html.P(id="post-1-text",className="card-text",),
+                                   ]),style={"width": "14rem"},
+            ),
+            dbc.Card(dbc.CardBody([dbc.CardImg(id="post-2-img", top=True, className="cardImg"),
+                                   html.H5(className="card-title"),
+                        html.P(id="post-2-text",className="card-text",),
+                        ]),style={"width": "14rem"},
+            ),
+            dbc.Card(dbc.CardBody([dbc.CardImg(id="post-3-img", top=True, className="cardImg"),
+                                   html.H5(className="card-title"),
+                        html.P(id="post-3-text",className="card-text",),
+                        ]),style={"width": "14rem"},
+            ),
+            ]),
+
+        id="socialMediaCards",
+        className="socialMediaCards"
+        ),
+        html.Div(html.H6(
+            id="IGFeed",
+            children="Instagram Feed",
+            className="IGFeed",
+        )),
     ],
 
     className="background"
@@ -487,9 +562,10 @@ app.layout = html.Div(
 @app.callback(
     [Output("checkin-dates", "figure"),
      Output("checkin-days", "figure"),
-     Output("checkin-months", "figure")],
-    [Input("checklist", "value")])
-def update_bar_chart(state_chosen):
+     Output("checkin-months", "figure"),],
+    [Input("newsDropdown", "value"),
+     Input("checklist", "value")])
+def update_bar_chart(dropdown_value, state_chosen):
     # make dataframes that the buttons can update according to user requests
     fileButton = dash.callback_context
 
@@ -498,27 +574,40 @@ def update_bar_chart(state_chosen):
         for col in frequencies.columns:
             if option in col:
                 total_columns.append(col)
-
     check = frequencies[[state for state in total_columns]]
     dayCheck = dayFrequencies[[state for state in total_columns]]
     monthCheck = monthFrequencies[[state for state in total_columns]]
-
     # plotly bar charts
 
-    checkinsVsDate = px.line(check, x=check.index, title="Product Usage All Time",
+    productToKeep = []
+    for name in total_columns:
+        if dropdown_value in name:
+            productToKeep.append(name)
+
+    checkinsVsDate = px.line(check, x=check.index, title="Product Usage All Time - Click restaurants on the right to view",
                              y=total_columns,
                              labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsDate.update_layout(yaxis_title="Number of Checkins")
 
-    checkinsVsDay = px.line(dayCheck, x=dayCheck.index, title="Product Usage Last Three Weeks",
+    checkinsVsDate.for_each_trace(lambda trace: trace.update(visible="legendonly")
+                                  if trace.name not in productToKeep else ())
+
+    checkinsVsDay = px.line(dayCheck, x=dayCheck.index, title="Product Usage Last Three Weeks - Click restaurants on the right to view",
                             y=total_columns,
                             labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsDay.update_layout(yaxis_title="Number of Checkins")
 
-    checkinsVsMonth = px.line(monthCheck, x=monthCheck.index, title="Product Usage Last Three Months",
+    checkinsVsDay.for_each_trace(lambda trace: trace.update(visible="legendonly")
+                                  if trace.name not in productToKeep else ())
+
+
+    checkinsVsMonth = px.line(monthCheck, x=monthCheck.index, title="Product Usage Last Three Months - Click restaurants on the right to view",
                               y=total_columns,
                               labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsMonth.update_layout(yaxis_title="Number of Checkins")
+
+    checkinsVsMonth.for_each_trace(lambda trace: trace.update(visible="legendonly")
+                                  if trace.name not in productToKeep else ())
 
     with open('checkinsVsDate.pkl', 'wb') as output:
         pickle.dump(checkinsVsDate, output, pickle.HIGHEST_PROTOCOL)
@@ -627,7 +716,14 @@ def display_value(value, stars_or_no):
 
 @app.callback(Output("card", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value!=5:
+    if value!=2 or value != 5:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+@app.callback(Output("IGFeed", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value==1:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -660,7 +756,7 @@ def makeMap(state_chosen):
                            hover_data=["state", "stars", "review_count"],
                            color="stars", zoom=4, height=500, title="Individual Products", labels={
             "stars": "Average Stars", "state": "State", "review_count": "Review Count", "latitude": "Latitude",
-            "longitude": "Longitude",
+            "longitude": "Longitude"
         })
     ma.update_layout(mapbox_style="open-street-map")
     ma.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
@@ -668,6 +764,8 @@ def makeMap(state_chosen):
         pickle.dump(ma, output, pickle.HIGHEST_PROTOCOL)
     return ma
 
+for n in noGood:
+    formattedStars = formattedStars[formattedStars.name != n]
 
 @app.callback(
     Output('second-chart', 'figure'),
@@ -686,7 +784,6 @@ def makeNameVsStarsChart(state_chosen):
     with open('nameVsStars.pkl', 'wb') as output:
         pickle.dump(nameVsStars, output, pickle.HIGHEST_PROTOCOL)
     return nameVsStars
-
 
 
 
@@ -759,57 +856,120 @@ def downloadFile(n_clicks, visibility_state, checkin_state):
     if visibility_state == 5:
         with open('attributeCount.pkl', 'rb') as input:
             attributeCount = pickle.load(input)
-            attributeCount.write_image('images/SummaryStatistics.pdf')
-        return dcc.send_file('images/SummaryStatistics.pdf')
+            attributeCount.write_image('static/images/SummaryStatistics.pdf')
+        return dcc.send_file('static/images/SummaryStatistics.pdf')
     elif visibility_state == 4:
         with open('nameVsReviewCount.pkl', 'rb') as input:
             nameVsReviewCount = pickle.load(input)
-            nameVsReviewCount.write_image('images/ProductsVsReviewCount.pdf')
-        return dcc.send_file('images/ProductsVsReviewCount.pdf')
+            nameVsReviewCount.write_image('static/images/ProductsVsReviewCount.pdf')
+        return dcc.send_file('static/images/ProductsVsReviewCount.pdf')
     elif visibility_state == 3:
         with open('nameVsStars.pkl', 'rb') as input:
             nameVsStars = pickle.load(input)
-            nameVsStars.write_image('images/ProductsVsUserRatings.pdf')
-        return dcc.send_file('images/ProductsVsUserRatings.pdf')
+            nameVsStars.write_image('static/images/ProductsVsUserRatings.pdf')
+        return dcc.send_file('static/images/ProductsVsUserRatings.pdf')
     elif visibility_state == 2:
         with open('ma.pkl', 'rb') as input:
             map = pickle.load(input)
-            map.write_image('images/Map.pdf')
-        return dcc.send_file('images/Map.pdf')
+            map.write_image('static/images/Map.pdf')
+        return dcc.send_file('static/images/Map.pdf')
     else:
         if checkin_state == 1:
             with open('checkinsVsDate.pkl', 'rb') as input:
                 checkinsVsDate = pickle.load(input)
-                checkinsVsDate.write_image('images/ProductUsageAllTime.pdf')
-            return dcc.send_file('images/ProductUsageAllTime.pdf')
+                checkinsVsDate.write_image('static/images/ProductUsageAllTime.pdf')
+            return dcc.send_file('static/images/ProductUsageAllTime.pdf')
         elif checkin_state == 2:
             with open('checkinsVsMonth.pkl', 'rb') as input:
                 checkinsVsMonth = pickle.load(input)
-                checkinsVsMonth.write_image('images/ProductUsageLastThreeMonths.pdf')
-            return dcc.send_file('images/ProductUsageLastThreeMonths.pdf')
+                checkinsVsMonth.write_image('static/images/ProductUsageLastThreeMonths.pdf')
+            return dcc.send_file('static/images/ProductUsageLastThreeMonths.pdf')
         else:
             with open('checkinsVsDay.pkl', 'rb') as input:
                 checkinsVsDay = pickle.load(input)
-                checkinsVsDay.write_image('images/ProductUsageLastThreeWeeks.pdf')
+                checkinsVsDay.write_image('static/images/ProductUsageLastThreeWeeks.pdf')
             # df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
-            return dcc.send_file('images/ProductUsageLastThreeWeeks.pdf')
+            return dcc.send_file('static/images/ProductUsageLastThreeWeeks.pdf')
 
-
-
-@app.callback([Output("card-text", "children"),
+@app.callback([Output("post-1-text", "children"),
+               Output("post-2-text", "children"),
+               Output("post-3-text", "children"),
+               Output("card-text", "children"),
                Output("card-title", "children"),
-               Output("img", "src")
+               Output("img", "src"),
+               Output("post-1-img", "src"),
+               Output("post-2-img", "src"),
+               Output("post-3-img", "src"),
                ],
-              Input("newsDropdown", "value"))
-def update_card_text(dropdown_value):
+              [Input("newsDropdown", "value"),
+               Input('dateRange', 'start_date'),
+               Input("dateRange", "end_date")])
+def update_card_text(dropdown_value, start_date, end_date):
     article_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['title'].to_list()
     date_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['date'].to_list()
     source_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['source'].to_list()
-    correct_img = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['imageUrl'].to_list()[0]
+    url_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['url'].to_list()
+    imgList = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['imageUrl'].to_list()
+
+    post1url = "static/images/" + dropdown_value + "1" + ".png"
+    post2url = "static/images/" + dropdown_value + "2" + ".png"
+    post3url = "static/images/" + dropdown_value + "3" + ".png"
+
+    caption1 = socialMediaDFs[newsNames.index(dropdown_value)].caption.to_list()[0]
+    if(len(caption1) > 350):
+        caption1 = caption1[0:350] + "..."
+    caption1 +=" Date: "+ str(socialMediaDFs[newsNames.index(dropdown_value)].date.to_list()[0])
+
+    caption2 = socialMediaDFs[newsNames.index(dropdown_value)].caption.to_list()[1]
+    if (len(caption2) > 350):
+        caption2 = caption2[0:350] + "..."
+    caption2 += " Date: " + str(socialMediaDFs[newsNames.index(dropdown_value)].date.to_list()[1])
+
+    caption3 = socialMediaDFs[newsNames.index(dropdown_value)].caption.to_list()[2]
+    if (len(caption3) > 350):
+        caption3 = caption3[0:350] + "..."
+    caption3 += " Date: " + str(socialMediaDFs[newsNames.index(dropdown_value)].date.to_list()[2])
+
+
+    try:
+        correct_img = imgList[1]
+    except IndexError:
+        imgList = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['imageUrl'].to_list()
+        correct_img = imgList[0]
     all_titles = ""
+    each_article = []
     for i in range(len(article_list)):
-        all_titles += str(i+1) + ": " + "Date: " + date_list[i] + ", Source: " + source_list[i] + ", Title: "+ article_list[i] + ". \n"
-    return all_titles, dropdown_value, correct_img
+        if start_date <= date_list[i] <= end_date:
+            each_article.append(dbc.ListGroupItem(article_list[i] + ": " + "Date: " + date_list[i] + ", Source: " + source_list[i] +  ".", href=url_list[i], target="_blank"))
+    return caption1, caption2, caption3, each_article, dropdown_value, correct_img, post1url, post2url, post3url
+
+
+# make the dropdown propagate with the trace selected on the graph
+@app.callback(Output("newsDropdown", "value"),
+              [Input("checklist", "value"),
+               Input("checkin-dates", "restyleData"),
+               ])
+def update_dropdown(state_chosen, overall):
+    total_columns = []
+    for option in state_chosen:
+        for col in frequencies.columns:
+            if option in col:
+                total_columns.append(col)
+    toReturn = "Starbucks"
+    try:
+        toReturn = total_columns[overall[1][0]][4:]
+    except TypeError:
+        print("")
+    return toReturn
+
+@app.callback(Output("socialMediaCards", "style"), Input("radios", "value"))
+def display_value(radiosValue):
+    if radiosValue == 1:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
 
 # run the app at port 8080
 if __name__ == "__main__":
