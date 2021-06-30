@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input, State
+from plotly.subplots import make_subplots
 import re
 import json
 from sampleData import AttributeData
@@ -360,25 +361,6 @@ app.layout = html.Div(
             className="radioOptions",
             value=1, style={'display': 'block'}
         )),
-        # html.Div(
-        #     [
-        #         dbc.RadioItems(
-        #             id="summaryStatsRadio",
-        #             className="toggle-buttons",
-        #             labelClassName="btn btn-secondary",
-        #             labelCheckedClassName="active",
-        #
-        #             options=[
-        #                 {"label": "Attribute Comparison By Stars", "value": 1},
-        #                 {"label": "Attribute Comparison By Product", "value": 2},
-        #             ],
-        #             value=2,
-        #         ),
-        #         html.Div(id="output2"),
-        #     ],
-        #     style={'display': 'block'},
-        #     className="radio-group",
-        # ),
         html.Div(children=dcc.Graph(
             id="checkin-dates", config={"displayModeBar": False},
         ),
@@ -404,7 +386,7 @@ app.layout = html.Div(
                 id='ma',
                 figure=map,
             ),
-            className="wrapper", style={'display': 'block'}
+            className="wrapper", style={'display': 'block'},
         ),
         ],
         ),
@@ -432,30 +414,33 @@ app.layout = html.Div(
             className="summaryStatsGroup",
         ),
 
-        # html.Div(
-        #     [
-        #         dbc.RadioItems(
-        #             id="summaryStatsRadio",
-        #             className="toggle-buttons",
-        #             labelClassName="btn btn-secondary",
-        #             labelCheckedClassName="active",
-        #
-        #             options=[
-        #                 {"label": "Attribute Comparison By Stars", "value": 1},
-        #                 {"label": "Attribute Comparison By Product", "value": 2},
-        #             ],
-        #             value=2,
-        #         ),
-        #         html.Div(id="output2"),
-        #     ],
-        #     style={'display': 'block'},
-        #     className="radio-group",
-        # ),
-
         html.Div([
             dcc.Dropdown(
                     id='starsDropdown',
-                    options=['1 Star', '2'],
+                    options=[
+                        {"label": "1 Star", "value": 1},
+                        {"label": "2 Star", "value": 2},
+                        {"label": "3 Star", "value": 3},
+                        {"label": "4 Star", "value": 4},
+                        {"label": "5 Star", "value": 5},
+                    ],
+                    value=5,
+                    searchable=False,
+                    className="starsDropdown",
+                ),
+        ], ),
+        html.Div([
+            dcc.Dropdown(
+                    id='restaurantDropdown1',
+                    options=dropDownRestaurants,
+                    value='Starbucks',
+                    className="starsDropdown",
+                ),
+        ], ),
+        html.Div([
+            dcc.Dropdown(
+                    id='restaurantDropdown2',
+                    options=dropDownRestaurants,
                     value='Starbucks',
                     className="starsDropdown",
                 ),
@@ -503,10 +488,8 @@ app.layout = html.Div(
     [Output("checkin-dates", "figure"),
      Output("checkin-days", "figure"),
      Output("checkin-months", "figure")],
-    [Input("checklist", "value"),
-     State("checkinToggle", "value"),
-     State('radios', 'value')])
-def update_bar_chart(state_chosen, checkin_value, visibility_state):
+    [Input("checklist", "value")])
+def update_bar_chart(state_chosen):
     # make dataframes that the buttons can update according to user requests
     fileButton = dash.callback_context
 
@@ -537,17 +520,14 @@ def update_bar_chart(state_chosen, checkin_value, visibility_state):
                               labels={"index": "Date", "variable": "State and Name", "value": "Total Checkins"})
     checkinsVsMonth.update_layout(yaxis_title="Number of Checkins")
 
-    # if visibility_state == 1 and checkin_value == 1 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-    #     checkinsVsDate.write_image('images/checkinsVsDate.pdf')
-    #     return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 1)
-    #
-    # if visibility_state == 1 and checkin_value == 2 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-    #     checkinsVsMonth.write_image('images/checkinsVsMonth.pdf')
-    #     return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 2)
-    #
-    # if visibility_state == 1 and checkin_value == 3 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-    #     checkinsVsDay.write_image('images/checkinsVsDay.pdf')
-    #     return checkinsVsDate, checkinsVsMonth, checkinsVsDay, downloadFile(visibility_state, 3)
+    with open('checkinsVsDate.pkl', 'wb') as output:
+        pickle.dump(checkinsVsDate, output, pickle.HIGHEST_PROTOCOL)
+
+    with open('checkinsVsMonth.pkl', 'wb') as output:
+        pickle.dump(checkinsVsMonth, output, pickle.HIGHEST_PROTOCOL)
+
+    with open('checkinsVsDay.pkl', 'wb') as output:
+        pickle.dump(checkinsVsDay, output, pickle.HIGHEST_PROTOCOL)
 
     # return all the charts/maps
     return checkinsVsDate, checkinsVsMonth, checkinsVsDay
@@ -585,12 +565,12 @@ def display_value(value):
         return {'display': 'none'}
 
 
-# @app.callback(Output("numStarsRadio", "style"), [Input("radios", "value")])
-# def display_value(value):
-#     if value == 5:
-#         return {'display': 'block'}
-#     else:
-#         return {'display': 'none'}
+@app.callback(Output("numStarsRadio", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value == 5:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
 
 
 @app.callback(Output("checkinToggle", "style"), [Input("radios", "value")])
@@ -624,19 +604,26 @@ def display_value(checkinValue, radiosValue):
     else:
         return {'display': 'none'}
 
-@app.callback(Output("fileButton", "style"), [Input("radios", "value")])
-def display_value(value):
-    if value!=2:
-        return {'display': 'block'}
-    else:
-        return {'display': 'none'}
-
-# @app.callback(Output("starsDropdown", "style"), [Input("radios", "value")])
+# @app.callback(Output("fileButton", "style"), [Input("radios", "value")])
 # def display_value(value):
-#     if value==5:
+#     if value!=2:
 #         return {'display': 'block'}
 #     else:
 #         return {'display': 'none'}
+
+@app.callback(Output("starsDropdown", "style"), [Input("radios", "value"), Input("numStarsRadio", "value")])
+def display_value(value, stars_or_no):
+    if value==5 and stars_or_no == 1:
+        return {}
+    else:
+        return {'display': 'none'}
+
+@app.callback(Output("restaurantDropdown1", "style"), Output("restaurantDropdown2", "style"), [Input("radios", "value"), Input("numStarsRadio", "value")])
+def display_value(value, stars_or_no):
+    if value==5 and stars_or_no == 2:
+        return {}, {}
+    else:
+        return {'display': 'none'}, {'display': 'none'}
 
 @app.callback(Output("card", "style"), [Input("radios", "value")])
 def display_value(value):
@@ -648,10 +635,8 @@ def display_value(value):
 
 @app.callback(
     Output('bar-chart', 'figure'),
-    [Input("checklist", "value"),
-     State('radios', 'value')])
-def makeNameVsReviewCount(state_chosen, visibility_state):
-    fileButton = dash.callback_context
+    [Input("checklist", "value")])
+def makeNameVsReviewCount(state_chosen):
     dff = data[data["state"].isin(state_chosen)]
     nameVsReviewCount = px.bar(dff, x="review_count", y="name", orientation='h', color="state",
                                title="Products vs. Review Count",
@@ -661,9 +646,8 @@ def makeNameVsReviewCount(state_chosen, visibility_state):
                                    "state": "State"
                                }
                                )
-    # if visibility_state == 4 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-    #     nameVsReviewCount.write_image('images/nameVsReviewCount.pdf')
-    #     return nameVsReviewCount, downloadFile(visibility_state, -1)
+    with open('nameVsReviewCount.pkl', 'wb') as output:
+        pickle.dump(nameVsReviewCount, output, pickle.HIGHEST_PROTOCOL)
     return nameVsReviewCount
 
 
@@ -676,19 +660,19 @@ def makeMap(state_chosen):
                            hover_data=["state", "stars", "review_count"],
                            color="stars", zoom=4, height=500, title="Individual Products", labels={
             "stars": "Average Stars", "state": "State", "review_count": "Review Count", "latitude": "Latitude",
-            "longitude": "Longitude"
+            "longitude": "Longitude",
         })
     ma.update_layout(mapbox_style="open-street-map")
     ma.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    with open('ma.pkl', 'wb') as output:
+        pickle.dump(ma, output, pickle.HIGHEST_PROTOCOL)
     return ma
 
 
 @app.callback(
     Output('second-chart', 'figure'),
-    [Input("checklist", "value"),
-     State('radios', 'value')])
-def makeNameVsStarsChart(state_chosen, visibility_state):
-    fileButton = dash.callback_context
+    [Input("checklist", "value")])
+def makeNameVsStarsChart(state_chosen):
     st = formattedStars[formattedStars["state"].isin(state_chosen)]
     nameVsStars = px.bar(st, x="stars", y="name", orientation='h',
                          color="state", barmode='group',
@@ -699,9 +683,8 @@ def makeNameVsStarsChart(state_chosen, visibility_state):
                              "state": "State"
                          }
                          )
-    # if visibility_state == 3 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-    #     nameVsStars.write_image('images/nameVsStars.pdf')
-    #     return nameVsStars, downloadFile(visibility_state, -1)
+    with open('nameVsStars.pkl', 'wb') as output:
+        pickle.dump(nameVsStars, output, pickle.HIGHEST_PROTOCOL)
     return nameVsStars
 
 
@@ -710,122 +693,60 @@ def makeNameVsStarsChart(state_chosen, visibility_state):
 # Radio buttons for changing stars in attribute graph
 @app.callback(
     Output('third-chart', 'figure'),
-    [Input('checklist', 'value'),
+    [Input('starsDropdown', 'value'),
+     Input('checklist', 'value'),
+     Input('numStarsRadio', 'value'),
+     Input('restaurantDropdown1', 'value'),
+     Input('restaurantDropdown2', 'value'),
      State('radios', 'value')])
-def update_attribute_chart(state_chosen, visibility_state):
-    fileButton = dash.callback_context
-
-    # if fileButton.triggered and fileButton.triggered[0]['prop_id'] != 'fileButton.n_clicks':
+def update_attribute_chart(star_chosen, state_chosen, version_shown, restaurant1, restaurant2, visibility_state):
     a = AttributeData()
     a.updateStates(state_chosen)
-    a.updateStar(1)
-    labels1, attributesTrue1, attributesFalse1 = a.createAttributeGraphs(False)
-    a.updateStar(2)
-    labels2, attributesTrue2, attributesFalse2 = a.createAttributeGraphs(False)
-    a.updateStar(3)
-    labels3, attributesTrue3, attributesFalse3 = a.createAttributeGraphs(False)
-    a.updateStar(4)
-    labels4, attributesTrue4, attributesFalse4 = a.createAttributeGraphs(False)
-    a.updateStar(5)
-    labels5, attributesTrue5, attributesFalse5 = a.createAttributeGraphs(False)
+    if version_shown == 1:
+        a.updateStar(star_chosen)
+        labels, attributesTrue, attributesFalse = a.createAttributeGraphs(False)
+        attributeCount = go.Figure(data=[
+            go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
+            go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
+        ])
+        attributeCount.update_layout(height=600, barmode='group', title='Attributes of ' + str(star_chosen) + ' Star Products',
+                                     yaxis_title="Number of Attributes",
+                                     xaxis_title="Attributes")
+        with open('attributeCount.pkl', 'wb') as output:
+            pickle.dump(attributeCount, output, pickle.HIGHEST_PROTOCOL)
+        return attributeCount
+    else:
+        a.updateRestaurant(restaurant1)
+        labels, attributesTrue, attributesFalse = a.createAttributeGraphs(True)
+        attributeCount = make_subplots(rows=2, cols=1, vertical_spacing=.3)
 
-    attributeCount = go.Figure()
-    attributeCount.add_trace(go.Bar(name='True', x=labels1, y=attributesTrue1, marker_color='darkblue', visible=False))
-    attributeCount.add_trace(go.Bar(name='False', x=labels1, y=attributesFalse1, marker_color='lightblue', visible=False))
-    attributeCount.add_trace(go.Bar(name='True', x=labels2, y=attributesTrue2, marker_color='darkblue', visible=False))
-    attributeCount.add_trace(go.Bar(name='False', x=labels2, y=attributesFalse2, marker_color='lightblue', visible=False))
-    attributeCount.add_trace(go.Bar(name='True', x=labels3, y=attributesTrue3, marker_color='darkblue', visible=False))
-    attributeCount.add_trace(go.Bar(name='False', x=labels3, y=attributesFalse3, marker_color='lightblue', visible=False))
-    attributeCount.add_trace(go.Bar(name='True', x=labels4, y=attributesTrue4, marker_color='darkblue', visible=False))
-    attributeCount.add_trace(go.Bar(name='False', x=labels4, y=attributesFalse4, marker_color='lightblue', visible=False))
-    attributeCount.add_trace(go.Bar(name='True', x=labels5, y=attributesTrue5, marker_color='darkblue', visible=True))
-    attributeCount.add_trace(go.Bar(name='False', x=labels5, y=attributesFalse5, marker_color='lightblue', visible=True))
-    attributeCount.update_layout(title='Attributes of 5 Star Products')
-    attributeCount.update_layout(barmode='group',
-                                 yaxis_title="Number of Attributes",
-                                 xaxis_title="Attributes",
-                                 # execute=saveImagesOfCharts(attributeCount),
-                                 clickmode='event',
-                                 updatemenus=[dict(
-                                        type = "dropdown",
-                                        direction = 'down',
-                                        active=4,
-                                        buttons=list([
-                                            dict(
-                                                args=[{'visible': [True, True, False, False, False, False,
-                                                                   False, False, False, False]},
-                                                      {'title':'Attributes of 1 Star Products'}],
-                                                label="1 Star",
-                                                method="update"
-                                            ),
-                                            dict(
-                                                args=[{'visible': [False, False, True, True, False, False,
-                                                                   False, False, False, False]},
-                                                      {'title': 'Attributes of 2 Star Products'}],
-                                                label="2 Star",
-                                                method="update"
-                                            ),
-                                            dict(
-                                                args=[{'visible': [False, False, False, False, True, True,
-                                                                   False, False, False, False]},
-                                                      {'title': 'Attributes of 3 Star Products'}],
-                                                label="3 Star",
-                                                method="update"
-                                            ),
-                                            dict(
-                                                args=[{'visible': [False, False, False, False, False, False,
-                                                                   True, True, False, False]},
-                                                      {'title': 'Attributes of 4 Star Products'}],
-                                                label="4 Star",
-                                                method="update"
-                                            ),
-                                            dict(
-                                                args=[{'visible': [False, False, False, False, False, False,
-                                                                   False, False, True, True]},
-                                                      {'title':'Attributes of 5 Star Products'}],
-                                                label="5 Star",
-                                                method="update"
-                                            )
-                                        ]),
-                                        pad={"r": 0, "t": 0},
-                                        showactive=True,
-                                        x=0.5,
-                                        xanchor="left",
-                                        y=1.5,
-                                        yanchor="top"
-                                    ),])
-    print('ayyy')
-    f = go.FigureWidget(attributeCount)
-    # attributeCount.on('plotly_click', saveImagesOfCharts(attributeCount))
-    # attributeCount.on_selection(print('now'))
+        attributeCount.add_trace(
+                go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
+            row=1, col=1
+        )
+        attributeCount.add_trace(
+            go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
+            row=1, col=1
+        )
 
-    # attributeCount.
-    # with open('attributeCount.pkl', 'wb') as output:
-    #     pickle.dump(attributeCount, output, pickle.HIGHEST_PROTOCOL)
-    # saveImagesOfCharts()
-    # if visibility_state == 5 and fileButton.triggered and fileButton.triggered[0]['prop_id'] == 'fileButton.n_clicks':
-    #     attributeCount.write_image('images/AttributeGraph.pdf')
-    #     return attributeCount, downloadFile(visibility_state, -1)
+        a.updateRestaurant(restaurant2)
+        labels, attributesTrue, attributesFalse = a.createAttributeGraphs(True)
+
+        attributeCount.add_trace(
+            go.Bar(showlegend=False, x=labels, y=attributesTrue, marker_color='darkblue'),
+            row=2, col=1
+        )
+
+        attributeCount.add_trace(
+            go.Bar(showlegend=False, x=labels, y=attributesFalse, marker_color='lightblue'),
+            row=2, col=1
+        )
+
+        attributeCount.update_layout(showlegend=True, height=1000, width=800, title_text=str(restaurant1) + " vs " + str(restaurant2))
+        with open('attributeCount.pkl', 'wb') as output:
+            pickle.dump(attributeCount, output, pickle.HIGHEST_PROTOCOL)
     return attributeCount
 
-# attributeCount = ''
-# with open('attributeCount.pkl', 'rb') as input:
-#     attributeCount = pickle.load(input)
-# f = go.FigureWidget(attributeCount)
-# print(f.data[0])
-# f.data[0].on_click(print('brrrr'))
-
-# @app.callback(Output('third-chart', 'figure'), [Input("oneStar", "value"), State('radios', 'value')])
-# def display_value(value, visibility_state):
-#     if visibility_state == 5:
-#         print('inside')
-#     return dash.no_update
-
-def saveImagesOfCharts(figure):
-    print('here')
-    # print(figure)
-    with open('attributeCount.pkl', 'wb') as output:
-        pickle.dump(figure, output, pickle.HIGHEST_PROTOCOL)
 
 # download report into csv file
 @app.callback(
@@ -838,25 +759,40 @@ def downloadFile(n_clicks, visibility_state, checkin_state):
     if visibility_state == 5:
         with open('attributeCount.pkl', 'rb') as input:
             attributeCount = pickle.load(input)
-            attributeCount.write_image('images/AttributeGraph.pdf')
-        return dcc.send_file('images/AttributeGraph.pdf')
+            attributeCount.write_image('images/SummaryStatistics.pdf')
+        return dcc.send_file('images/SummaryStatistics.pdf')
     elif visibility_state == 4:
-        return dcc.send_file('images/nameVsReviewCount.pdf')
+        with open('nameVsReviewCount.pkl', 'rb') as input:
+            nameVsReviewCount = pickle.load(input)
+            nameVsReviewCount.write_image('images/ProductsVsReviewCount.pdf')
+        return dcc.send_file('images/ProductsVsReviewCount.pdf')
     elif visibility_state == 3:
-        return dcc.send_file('images/nameVsStars.pdf')
+        with open('nameVsStars.pkl', 'rb') as input:
+            nameVsStars = pickle.load(input)
+            nameVsStars.write_image('images/ProductsVsUserRatings.pdf')
+        return dcc.send_file('images/ProductsVsUserRatings.pdf')
+    elif visibility_state == 2:
+        with open('ma.pkl', 'rb') as input:
+            map = pickle.load(input)
+            map.write_image('images/Map.pdf')
+        return dcc.send_file('images/Map.pdf')
     else:
         if checkin_state == 1:
-            return dcc.send_file('images/checkinsVsDate.pdf')
+            with open('checkinsVsDate.pkl', 'rb') as input:
+                checkinsVsDate = pickle.load(input)
+                checkinsVsDate.write_image('images/ProductUsageAllTime.pdf')
+            return dcc.send_file('images/ProductUsageAllTime.pdf')
         elif checkin_state == 2:
-            return dcc.send_file('images/checkinsVsMonth.pdf')
+            with open('checkinsVsMonth.pkl', 'rb') as input:
+                checkinsVsMonth = pickle.load(input)
+                checkinsVsMonth.write_image('images/ProductUsageLastThreeMonths.pdf')
+            return dcc.send_file('images/ProductUsageLastThreeMonths.pdf')
         else:
+            with open('checkinsVsDay.pkl', 'rb') as input:
+                checkinsVsDay = pickle.load(input)
+                checkinsVsDay.write_image('images/ProductUsageLastThreeWeeks.pdf')
             # df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
-            return dcc.send_file('images/checkinsVsDay.pdf')
-
-
-# inputList = []
-# for r in restaurantsList:
-#     inputList.append(Input(r, "n_clicks"))
+            return dcc.send_file('images/ProductUsageLastThreeWeeks.pdf')
 
 
 

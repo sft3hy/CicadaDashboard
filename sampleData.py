@@ -17,12 +17,16 @@ class AttributeData:
         self.star = 5
         self.data = pd.read_json('finalBusinessData.json')
         self.states = [state for state in np.sort(self.data.state.unique())]
+        self.restaurant = []
 
     def updateStar(self, starNum):
         self.star = starNum
 
     def updateStates(self, listOfStates):
         self.states = listOfStates
+
+    def updateRestaurant(self, restaurantList):
+        self.restaurant = restaurantList
 
     def getStar(self):
         return self.star
@@ -290,7 +294,7 @@ class AttributeData:
 
 
     # creates graphs of the attributes for each star rating
-    def createAttributeGraphs(self, show):
+    def createAttributeGraphs(self, doublePlot):
         labels = []
         attributesTrue = []
         attributesFalse = []
@@ -299,9 +303,14 @@ class AttributeData:
         # fills the dictionary with all the attributes found in 
         # reviews with the star rating passed in or those that round up
         # or down to the star rating passed in
-        for i in self.data.index:
-            if self.round_up(self.data.iloc[i]['stars']) == self.star and self.data.iloc[i]['state'] in self.states:
-                self.getAttributes(self.data, i, dictionary)
+        if doublePlot:
+            for i in self.data.index:
+                if self.data.iloc[i]['name'] == self.restaurant and self.data.iloc[i]['state'] in self.states:
+                    self.getAttributes(self.data, i, dictionary)
+        else:
+            for i in self.data.index:
+                if self.round_up(self.data.iloc[i]['stars']) == self.star and self.data.iloc[i]['state'] in self.states:
+                    self.getAttributes(self.data, i, dictionary)
         
         # gets rid of irrelevant data and fills arrays needed to plot data
         for key in dictionary:

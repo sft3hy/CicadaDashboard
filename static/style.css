@@ -194,11 +194,14 @@
 }
 
 .starsDropdown {
-    clear: bottom;
-    float: bottom;
-    right: -100px;
+    /*clear: bottom;*/
+    /*float: bottom;*/
+    /*right: -100px;*/
     left: 800px;
-    /*margin-top: -600px;*/
+    /*width: 240px;*/
+    display: inline-block;
+    /*text-align: left;*/
+    position: relative;
     /*margin-bottom: -10px;*/
 }
 
