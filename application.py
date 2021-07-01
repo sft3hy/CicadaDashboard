@@ -538,7 +538,7 @@ app.layout = html.Div(
                     ],
                     value=5,
                     searchable=False,
-                    className="starsDropdown",
+                    className="sDropdown",
                 ),
         ], ),
         html.Div([
@@ -546,15 +546,15 @@ app.layout = html.Div(
                     id='restaurantDropdown1',
                     options=dropDownRestaurants,
                     value='Starbucks',
-                    className="starsDropdown",
+                    className="starsDropdown1",
                 ),
         ], ),
         html.Div([
             dcc.Dropdown(
                     id='restaurantDropdown2',
                     options=dropDownRestaurants,
-                    value='Starbucks',
-                    className="starsDropdown",
+                    value='Chick-fil-A',
+                    className="starsDropdown2",
                 ),
         ], ),
         html.Div(
@@ -577,7 +577,7 @@ app.layout = html.Div(
             dcc.Dropdown(
                     id='newsDropdown',
                     options=dropDownRestaurants,
-                    value='Starbucks',
+                    value="Starbucks",
                     className="restaurantDropdown",
                 ),
             dcc.DatePickerRange(
@@ -1104,7 +1104,8 @@ def downloadFile(n_clicks, visibility_state, checkin_state):
                ],
               [Input("newsDropdown", "value"),
                Input('dateRange', 'start_date'),
-               Input("dateRange", "end_date")])
+               Input("dateRange", "end_date"),
+               ])
 def update_card_text(dropdown_value, start_date, end_date):
     article_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['title'].to_list()
     date_list = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['date'].to_list()
@@ -1152,6 +1153,7 @@ def update_card_text(dropdown_value, start_date, end_date):
                Input("checkin-dates", "restyleData"),
                ])
 def update_dropdown(state_chosen, overall):
+
     total_columns = []
     for option in state_chosen:
         for col in frequencies.columns:
@@ -1170,8 +1172,6 @@ def display_value(radiosValue):
         return {'display': 'block'}
     else:
         return {'display': 'none'}
-
-
 
 # run the app at port 8080
 if __name__ == "__main__":

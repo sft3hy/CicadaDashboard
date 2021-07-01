@@ -13,12 +13,11 @@
     margin-top: 40px;
     margin-left: 274px;
     margin-right: -500px;
-
 }
 
 .fileButton {
     margin-left: 40px;
-    margin-top: -300px;
+    margin-top: -250px;
     clear: left;
     float: left;
 }
@@ -67,9 +66,7 @@
 
 .radio-group .custom-radio .custom-control-input ~ .custom-control-label::after {
   content: none;
-
 }
-
 
 /* restyle radio items */
 .radio-group .custom-control {
@@ -80,9 +77,10 @@
 }
 .toggle-buttons {
     position: relative;
-    margin-right: 60px;
+    /*margin-right: 60px;*/
     margin-left: 30px;
     text-align: left;
+    margin-bottom: -50px;
 }
 
 .summaryStatsGroup .custom-control-input ~ .custom-control-label::before {
@@ -91,7 +89,6 @@
 
 .summaryStatsGroup .custom-radio .custom-control-input ~ .custom-control-label::after {
   content: none;
-
 }
 
 /* restyle radio items */
@@ -130,11 +127,10 @@
     margin-left: 250px;
     margin-right: -200px;
 }
-.svg-container {
-    margin-top: -175px;
-    margin-left: 250px;
-    max-height: 450px;
-}
+/*.svg-container {*/
+/*    margin-left: 250px;*/
+/*    max-height: 450px;*/
+/*}*/
 
 .radio-group .btn-group > .custom-control:not(:last-child) > .btn {
   border-top-right-radius: 0;
@@ -177,7 +173,7 @@
     margin-left: 20px;
     font-size: 20px;
     text-align: center;
-    margin-bottom: -30px;
+    margin-bottom: -60px;
 }
 
 .NRO {
@@ -206,6 +202,7 @@
 }
 
 .header {
+    text-align: center;
     background-color: #CDE6F3;
     height: 144px;
     padding: 16px 0 0 0;
@@ -248,16 +245,27 @@
     padding-left: 10px;
 }
 
-.starsDropdown {
-    /*clear: bottom;*/
-    /*float: bottom;*/
-    /*right: -100px;*/
-    left: 800px;
-    /*width: 240px;*/
+.starsDropdown1 {
+    margin-top: -200px;
+    clear: right;
+    float: right;
     display: inline-block;
-    /*text-align: left;*/
-    position: relative;
-    /*margin-bottom: -10px;*/
+    margin-right: 20px;
+}
+
+.starsDropdown2 {
+    margin-top: 300px;
+    clear: right;
+    float: right;
+    display: inline-block;
+    margin-right: 20px;
+}
+
+.sDropdown {
+    clear: right;
+    float: right;
+    margin-right: 70px;
+    margin-top: -200px;
 }
 
 .dropAndCard {
@@ -294,12 +302,13 @@
 }
 
 .IGFeed {
-    margin-top: 493px;
+    margin-top: 515px;
     margin-left: 505px;
     margin-right: -200px;
     font-size: 30px;
     color: #F0FFFF;
 }
+
 
 .card {
     box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
