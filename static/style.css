@@ -16,6 +16,7 @@
 }
 
 .fileButton {
+    margin-right: -200px;
     margin-left: 40px;
     margin-top: -250px;
     clear: left;
@@ -123,6 +124,7 @@
 }
 
 .dash-graph {
+    height: 400px;
     margin-top: -150px;
     margin-left: 250px;
     margin-right: -200px;
@@ -161,6 +163,7 @@
 }
 
 .logo {
+    margin-right: -200px;
     width: 80px;
     height: 80px;
     margin-top: 30px;
@@ -302,7 +305,7 @@
 }
 
 .IGFeed {
-    margin-top: 515px;
+    margin-top: 465px;
     margin-left: 505px;
     margin-right: -200px;
     font-size: 30px;

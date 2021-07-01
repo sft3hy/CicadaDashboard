@@ -416,7 +416,7 @@ app.layout = html.Div(
                         {"label": "Summary Statistics", "value": 5},
                         {"label": "User Tracking", "value": 6},
                     ],
-                    value=2,
+                    value=1,
                 ),
                 html.Div(id="output"),
             ],
@@ -1069,6 +1069,7 @@ def update_card_text(dropdown_value, start_date, end_date):
     post1url = "static/images/" + dropdown_value + "1" + ".png"
     post2url = "static/images/" + dropdown_value + "2" + ".png"
     post3url = "static/images/" + dropdown_value + "3" + ".png"
+
 
     caption1 = socialMediaDFs[newsNames.index(dropdown_value)].caption.to_list()[0]
     if(len(caption1) > 350):
