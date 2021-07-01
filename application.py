@@ -202,13 +202,6 @@ mapDF = pd.DataFrame(list(zip(namsNStarsList, la, lo, sta, tars, nams, id, coun)
                               'review_count'])
 
 
-userAlexData = pd.read_json("userAlexandra.json")
-elite = userAlexData.elite.to_list()
-revCo = userAlexData.review_count.to_list()
-yelpS = userAlexData.yelping_since.to_list()
-
-
-
 # format a table to match check ins to business name using business_id
 checkins = pd.read_json("checkin.json")
 goodIDs = mapDF.business_id.to_list()
@@ -354,6 +347,35 @@ for r in newsDF.restaurant.unique():
     # dropDownRestaurants.append(dbc.DropdownMenuItem(r, id=r))
     dropDownRestaurants.append({"label": r, 'value': r})
 correct_img = ""
+
+with open("selectedTrackingData.json", encoding="UTF-8") as f:
+    tracking = json.load(f)
+
+totalProductList = []
+nameList = []
+for line in tracking:
+    if line['name_business'] not in totalProductList:
+        totalProductList.append(line['name_business'])
+    if {"label": line['name_user'], "value": line['name_user']} not in nameList:
+        nameList.append({"label": line['name_user'], "value": line['name_user']})
+
+
+productDF = pd.read_json("selectedTrackingData.json")
+danielDF = pd.read_json("userDaniel.json")
+
+noGood = ['Dunkin\' Donuts', 'Dunkin\' Donuts & Baskin-Robbins', 'Taco Bella\'s', 'Wendy\'s '
+          'Taco Bell Cantina', 'Starbucks ', 'Taco Bell and KFC', 'Burger King Restaurant',
+          'Chipotle Mexican Grill - Austin', 'Starbucks Reserve', 'Starbucks Florida Hotel',
+          'Starbucks - The Independent', 'Starbucks Coffee', 'Starbucks Coffee Company',
+          'Kentucky Fried Chicken', "Dunkin'  Donuts", "Wendy's "]
+
+productDF = productDF.replace(replacements)
+
+businessDropdown = [{"label": "All", "value": "All"}]
+for b in data.name.unique():
+    # dropDownRestaurants.append(dbc.DropdownMenuItem(r, id=r))
+    businessDropdown.append({"label": b, 'value': b})
+
 
 
 # the main meat of the display, all in this weird html/python hybrid (it's how dash works)
@@ -613,7 +635,8 @@ app.layout = html.Div(
         html.Div(children=[
             dcc.Dropdown(
                     id='productDropdown',
-                    options=dropDownRestaurants,
+                    options=businessDropdown,
+                    value='All',
                     placeholder="Select a Product",
                     className="restaurantDropdown",
                 ),
@@ -629,7 +652,6 @@ app.layout = html.Div(
                  ), ],
                 style={"width": "16rem"},
                 className="card-place"
-            #     merge
             ),
             ],
             id="productCard",
@@ -638,8 +660,9 @@ app.layout = html.Div(
         html.Div(children=[
             dcc.Dropdown(
                     id='userDropdown',
-                    options=dropDownRestaurants,
+                    options=nameList,
                     placeholder="Select a User",
+                    value="Vincent",
                     className="restaurantDropdown",
                 ),
             dbc.Card([
@@ -897,6 +920,29 @@ def makeNameVsReviewCount(state_chosen):
     with open('nameVsReviewCount.pkl', 'wb') as output:
         pickle.dump(nameVsReviewCount, output, pickle.HIGHEST_PROTOCOL)
     return nameVsReviewCount
+
+
+@app.callback(
+    Output('userMap', 'figure'),
+    [Input("userDropdown", "value"),
+     Input("productDropdown", "value")])
+def makeUserMap(user_Chosen, productChosen):
+    if productChosen == "All":
+        productData = productDF[productDF["name_user"] == user_Chosen]
+    else:
+        productData = productDF[productDF["name_user"] == user_Chosen]
+        productData = productData[productData["name_business"] == productChosen]
+    userMapFill = px.scatter_mapbox(productData, lat="latitude", lon="longitude", hover_name="name_business",
+                           hover_data=["stars_user", "review_count"],
+                           color="stars_business", zoom=4, height=500, title="Individual Products", labels={
+            "stars_user": "Stars", "review_count": "Review Count", "latitude": "Latitude",
+            "longitude": "Longitude"
+        })
+    userMapFill.update_layout(mapbox_style="open-street-map")
+    userMapFill.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    with open('userMapFill.pkl', 'wb') as output:
+        pickle.dump(userMapFill, output, pickle.HIGHEST_PROTOCOL)
+    return userMapFill
 
 
 @app.callback(
