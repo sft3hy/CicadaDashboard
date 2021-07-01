@@ -922,7 +922,7 @@ def makeNameVsReviewCount(state_chosen):
     return nameVsReviewCount
 
 
-# Populates User Map
+# Populates User Map with users
 @app.callback(
     Output('userMap', 'figure'),
     [Input("userDropdown", "value"),
