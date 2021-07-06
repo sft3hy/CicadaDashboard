@@ -437,7 +437,7 @@ app.layout = html.Div(
                         {"label": "Summary Statistics", "value": 5},
                         {"label": "User Tracking", "value": 6},
                     ],
-                    value=6,
+                    value=1,
                 ),
                 html.Div(id="output"),
             ],
@@ -638,6 +638,7 @@ app.layout = html.Div(
                     value='All',
                     placeholder="Select a Product",
                     className="restaurantDropdown",
+                    style={"width": "100%"}
                 ),
             dbc.Card([
                  dbc.CardBody(
@@ -649,7 +650,7 @@ app.layout = html.Div(
                          ),
                      ]
                  ), ],
-                style={"width": "10rem"},
+                style={"width": "15rem"},
                 className="card-place"
             ),
             ],
@@ -664,6 +665,7 @@ app.layout = html.Div(
                     placeholder="Select a User",
                     value="Vincent,3FjtcRncZ7nSdDROr1K-nQ",
                     className="restaurantDropdown",
+                    style={"width": "100%"}
                 ),
             dbc.Card([
                  dbc.CardBody(
@@ -675,7 +677,7 @@ app.layout = html.Div(
                          ),
                      ]
                  ), ],
-                style={"width": "10rem"},
+                style={"width": "15rem"},
                 className="card-place"
             ),
             ],
@@ -887,7 +889,7 @@ def display_value(value, stars_or_no):
 
 @app.callback(Output("restaurantDropdown1", "style"), Output("restaurantDropdown2", "style"), [Input("radios", "value"), Input("numStarsRadio", "value")])
 def display_value(value, stars_or_no):
-    if value==5 and stars_or_no == 2:
+    if value == 5 and stars_or_no == 2:
         return {}, {}
     else:
         return {'display': 'none'}, {'display': 'none'}
@@ -895,7 +897,7 @@ def display_value(value, stars_or_no):
 
 @app.callback(Output("card", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value!=2 and value != 5 and value != 6:
+    if value != 2 and value != 5 and value != 6:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -903,11 +905,18 @@ def display_value(value):
 
 @app.callback(Output("IGFeed", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value==1:
+    if value == 1:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
+
+@app.callback(Output("socialMediaCards", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value == 1:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
 
 @app.callback(
     Output('bar-chart', 'figure'),
@@ -1212,32 +1221,32 @@ def update_user_text(user):
     return each_user, user_name
 
 
-@app.callback([Output("product-text", "children"),
-               Output("product-title", "children"),
-               ],
-              [Input("prodcutDropdown", "value")
-               ])
-def update_product_text(product):
-
-    for i in productDF.index.unique():
-        if productDF.iloc[i]['user_id'] == user_id:
-            review_num = productDF.iloc[i]['review_count']
-            yelp_since = productDF.iloc[i]["yelping_since"]
-            elite = productDF.iloc[i]["elite"]
-            avg_star = productDF.iloc[i]["average_stars"]
-            break
-
-    list_group = dbc.ListGroup(
-        [
-            dbc.ListGroupItem("User ID: " + str(user_id)),
-            dbc.ListGroupItem("Total Reviews: " + str(review_num)),
-            dbc.ListGroupItem("Yelping Since: " + str(yelp_since)),
-            dbc.ListGroupItem("Elite: " + str(elite)),
-            dbc.ListGroupItem("Average Approval Rating: " + str(avg_star)),
-        ]
-    )
-    each_user = [list_group]
-    return each_user, user_name
+# @app.callback([Output("product-text", "children"),
+#                Output("product-title", "children"),
+#                ],
+#               [Input("prodcutDropdown", "value")
+#                ])
+# def update_product_text(product):
+#
+#     for i in productDF.index.unique():
+#         if productDF.iloc[i]['user_id'] == user_id:
+#             review_num = productDF.iloc[i]['review_count']
+#             yelp_since = productDF.iloc[i]["yelping_since"]
+#             elite = productDF.iloc[i]["elite"]
+#             avg_star = productDF.iloc[i]["average_stars"]
+#             break
+#
+#     list_group = dbc.ListGroup(
+#         [
+#             dbc.ListGroupItem("User ID: " + str(user_id)),
+#             dbc.ListGroupItem("Total Reviews: " + str(review_num)),
+#             dbc.ListGroupItem("Yelping Since: " + str(yelp_since)),
+#             dbc.ListGroupItem("Elite: " + str(elite)),
+#             dbc.ListGroupItem("Average Approval Rating: " + str(avg_star)),
+#         ]
+#     )
+#     each_user = [list_group]
+#     return each_user, user_name
 
 # run the app at port 8080
 if __name__ == "__main__":
