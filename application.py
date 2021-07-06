@@ -636,6 +636,7 @@ app.layout = html.Div(
                     value='All',
                     placeholder="Select a Product",
                     className="restaurantDropdown",
+                    style={'width': '95%'}
                 ),
             dbc.Card([
                  dbc.CardBody(
@@ -662,6 +663,7 @@ app.layout = html.Div(
                     placeholder="Select a User",
                     value="Vincent",
                     className="restaurantDropdown",
+                    style={'width': '95%'}
                 ),
             dbc.Card([
                  dbc.CardBody(
