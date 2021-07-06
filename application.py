@@ -60,7 +60,6 @@ replacements = {'Chipotle Mexican Grill': 'Chipotle', 'QDOBA Mexican Eats': 'QDO
 for n in noGood:
     data = data[data.name != n]
 data = data.replace(replacements)
-
 # # get smaller table to work with average stars
 # with open("finalBusinessData.json", encoding="UTF-8") as f:
 #     sData = json.load(f)
@@ -379,7 +378,6 @@ for b in data.name.unique():
     businessDropdown.append({"label": b, 'value': b})
 
 
-
 # the main meat of the display, all in this weird html/python hybrid (it's how dash works)
 app.layout = html.Div(
     children=[
@@ -388,8 +386,7 @@ app.layout = html.Div(
             children=[
                 html.Img(
                     src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/NRO.svg/1200px-NRO.svg.png',
-                    sizes="small", className="NRO", style={"clear": "right", ""
-                                                                             "oat": "right"}
+                    sizes="small", className="NRO", style={"clear": "right", "float": "right"}
                 ),
                 html.Img(src="static/logo.png", className='logo'
                          , style={"clear": "left", "float": "left"}),
@@ -401,7 +398,7 @@ app.layout = html.Div(
             ],
             className="header-title",
         ),
-        # Radio buttons to choose state
+        # Checklist to choose state
         html.Div(
             children=[
                 html.Div(
@@ -423,7 +420,7 @@ app.layout = html.Div(
             ],
             className="menu",
         ),
-        # Radio Buttons to choose what analytics to view
+        # Radio Buttons on the left side to choose what analytics to view
         html.Div(
             [
                 dbc.RadioItems(
@@ -440,7 +437,7 @@ app.layout = html.Div(
                         {"label": "Summary Statistics", "value": 5},
                         {"label": "User Tracking", "value": 6},
                     ],
-                    value=1,
+                    value=6,
                 ),
                 html.Div(id="output"),
             ],
@@ -502,7 +499,7 @@ app.layout = html.Div(
             className="wrapper", style={'display': 'block'}
         ), ],
         ),
-        # ANother random chart
+        # Another random chart
         html.Div(
             children=dcc.Graph(
                 id="second-chart", config={"displayModeBar": False},
@@ -606,7 +603,7 @@ app.layout = html.Div(
                 className="card-place"
             ),
             ], id="card",
-            className="dropAndCard"
+            className="dropAndCard",
         ),
         html.Div(dbc.CardGroup([
             dbc.Card(dbc.CardBody([dbc.CardImg(id="post-1-img", top=True, className="cardImg"),
@@ -652,12 +649,13 @@ app.layout = html.Div(
                          ),
                      ]
                  ), ],
-                style={"width": "16rem"},
+                style={"width": "10rem"},
                 className="card-place"
             ),
             ],
             id="productCard",
-            className="dropAndCardProduct"
+            className="dropAndCardProduct",
+            # style={"width": "40px"},
         ),
         html.Div(children=[
             dcc.Dropdown(
@@ -677,12 +675,13 @@ app.layout = html.Div(
                          ),
                      ]
                  ), ],
-                style={"width": "16rem"},
+                style={"width": "10rem"},
                 className="card-place"
             ),
             ],
             id="userCard",
-            className="dropAndCardUser"
+            className="dropAndCardUser",
+            # style={"width": "10%"},
         ),
     ],
     className="background"
