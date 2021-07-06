@@ -353,22 +353,24 @@ with open("selectedTrackingData.json", encoding="UTF-8") as f:
 
 totalProductList = []
 nameList = []
+user_ids = []
 for line in tracking:
     if line['name_business'] not in totalProductList:
         totalProductList.append(line['name_business'])
-    if {"label": line['name_user'], "value": line['name_user']} not in nameList:
-        nameList.append({"label": line['name_user'], "value": line['name_user']})
+    if {"label": line['user_id'], "value": line['user_id']} not in user_ids:
+        nameList.append({"label": line['name_user'], "value": line['name_user'] + ',' + line['user_id']})
+        user_ids.append({"label": line['user_id'], "value": line['user_id']})
 
 
 productDF = pd.read_json("selectedTrackingData.json")
-danielDF = pd.read_json("userDaniel.json")
 
 noGood = ['Dunkin\' Donuts', 'Dunkin\' Donuts & Baskin-Robbins', 'Taco Bella\'s', 'Wendy\'s '
           'Taco Bell Cantina', 'Starbucks ', 'Taco Bell and KFC', 'Burger King Restaurant',
           'Chipotle Mexican Grill - Austin', 'Starbucks Reserve', 'Starbucks Florida Hotel',
           'Starbucks - The Independent', 'Starbucks Coffee', 'Starbucks Coffee Company',
           'Kentucky Fried Chicken', "Dunkin'  Donuts", "Wendy's "]
-
+for n in noGood:
+    productDF = productDF[productDF.name_business != n]
 productDF = productDF.replace(replacements)
 
 businessDropdown = [{"label": "All", "value": "All"}]
@@ -662,7 +664,7 @@ app.layout = html.Div(
                     id='userDropdown',
                     options=nameList,
                     placeholder="Select a User",
-                    value="Vincent",
+                    value="Vincent,3FjtcRncZ7nSdDROr1K-nQ",
                     className="restaurantDropdown",
                 ),
             dbc.Card([
@@ -875,12 +877,14 @@ def display_value(checkinValue, radiosValue):
 #     else:
 #         return {'display': 'none'}
 
+
 @app.callback(Output("starsDropdown", "style"), [Input("radios", "value"), Input("numStarsRadio", "value")])
 def display_value(value, stars_or_no):
     if value==5 and stars_or_no == 1:
         return {}
     else:
         return {'display': 'none'}
+
 
 @app.callback(Output("restaurantDropdown1", "style"), Output("restaurantDropdown2", "style"), [Input("radios", "value"), Input("numStarsRadio", "value")])
 def display_value(value, stars_or_no):
@@ -889,12 +893,14 @@ def display_value(value, stars_or_no):
     else:
         return {'display': 'none'}, {'display': 'none'}
 
+
 @app.callback(Output("card", "style"), [Input("radios", "value")])
 def display_value(value):
     if value!=2 and value != 5 and value != 6:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
+
 
 @app.callback(Output("IGFeed", "style"), [Input("radios", "value")])
 def display_value(value):
@@ -928,10 +934,15 @@ def makeNameVsReviewCount(state_chosen):
     [Input("userDropdown", "value"),
      Input("productDropdown", "value")])
 def makeUserMap(user_Chosen, productChosen):
+    userList = user_Chosen.split(',')
+    user_name = userList[0]
+    user_id = userList[1]
     if productChosen == "All":
-        productData = productDF[productDF["name_user"] == user_Chosen]
+        productData = productDF[productDF["name_user"] == user_name]
+        productData = productData[productData['user_id'] == user_id]
     else:
-        productData = productDF[productDF["name_user"] == user_Chosen]
+        productData = productDF[productDF["name_user"] == user_name]
+        productData = productData[productData['user_id'] == user_id]
         productData = productData[productData["name_business"] == productChosen]
     userMapFill = px.scatter_mapbox(productData, lat="latitude", lon="longitude", hover_name="name_business",
                            hover_data=["stars_user", "review_count"],
@@ -1092,6 +1103,7 @@ def downloadFile(n_clicks, visibility_state, checkin_state):
             # df = pd.DataFrame({"a": [1, 2, 3, 4], "b": [2, 1, 5, 6], "c": ["x", "x", "y", "y"]})
             return dcc.send_file('static/images/ProductUsageLastThreeWeeks.pdf')
 
+
 @app.callback([Output("post-1-text", "children"),
                Output("post-2-text", "children"),
                Output("post-3-text", "children"),
@@ -1147,7 +1159,6 @@ def update_card_text(dropdown_value, start_date, end_date):
     return caption1, caption2, caption3, each_article, dropdown_value, correct_img, post1url, post2url, post3url
 
 
-
 # make the dropdown propagate with the trace selected on the graph
 @app.callback(Output("newsDropdown", "value"),
               [Input("checklist", "value"),
@@ -1167,12 +1178,67 @@ def update_dropdown(state_chosen, overall):
         print("")
     return toReturn
 
-@app.callback(Output("socialMediaCards", "style"), Input("radios", "value"))
-def display_value(radiosValue):
-    if radiosValue == 1:
-        return {'display': 'block'}
-    else:
-        return {'display': 'none'}
+
+@app.callback([Output("user-text", "children"),
+               Output("user-title", "children"),
+               ],
+              [Input("userDropdown", "value")
+               ])
+def update_user_text(user):
+    userList = user.split(',')
+    user_name = userList[0]
+    user_id = userList[1]
+    review_num = ""
+    yelp_since = ""
+    elite = ""
+    avg_star = ""
+    for i in productDF.index.unique():
+        if productDF.iloc[i]['user_id'] == user_id:
+            review_num = productDF.iloc[i]['review_count']
+            yelp_since = productDF.iloc[i]["yelping_since"]
+            elite = productDF.iloc[i]["elite"]
+            avg_star = productDF.iloc[i]["average_stars"]
+            break
+
+    list_group = dbc.ListGroup(
+        [
+            dbc.ListGroupItem("User ID: " + str(user_id)),
+            dbc.ListGroupItem("Total Reviews: " + str(review_num)),
+            dbc.ListGroupItem("Yelping Since: " + str(yelp_since)),
+            dbc.ListGroupItem("Elite: " + str(elite)),
+            dbc.ListGroupItem("Average Approval Rating: " + str(avg_star)),
+        ]
+    )
+    each_user = [list_group]
+    return each_user, user_name
+
+
+@app.callback([Output("product-text", "children"),
+               Output("product-title", "children"),
+               ],
+              [Input("prodcutDropdown", "value")
+               ])
+def update_product_text(product):
+
+    for i in productDF.index.unique():
+        if productDF.iloc[i]['user_id'] == user_id:
+            review_num = productDF.iloc[i]['review_count']
+            yelp_since = productDF.iloc[i]["yelping_since"]
+            elite = productDF.iloc[i]["elite"]
+            avg_star = productDF.iloc[i]["average_stars"]
+            break
+
+    list_group = dbc.ListGroup(
+        [
+            dbc.ListGroupItem("User ID: " + str(user_id)),
+            dbc.ListGroupItem("Total Reviews: " + str(review_num)),
+            dbc.ListGroupItem("Yelping Since: " + str(yelp_since)),
+            dbc.ListGroupItem("Elite: " + str(elite)),
+            dbc.ListGroupItem("Average Approval Rating: " + str(avg_star)),
+        ]
+    )
+    each_user = [list_group]
+    return each_user, user_name
 
 # run the app at port 8080
 if __name__ == "__main__":
