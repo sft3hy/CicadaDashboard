@@ -81,7 +81,8 @@
     /*margin-right: 60px;*/
     margin-left: 30px;
     text-align: left;
-    margin-bottom: -50px;
+    margin-bottom: -150px;
+    margin-top: 30px;
 }
 
 .summaryStatsGroup .custom-control-input ~ .custom-control-label::before {
@@ -189,12 +190,20 @@
     height: 80px;
 }
 
-.gif {
-    height: 80px;
-    width: 80px;
-    margin-bottom: -45px;
-    margin-top: 6px;
-    margin-left: 12px;
+.LiveData {
+    margin-top: 500px;
+    margin-left: -200px
+}
+.liveUserMap {
+    margin-left: 500px;
+    margin-top: -300px;
+}
+
+.heatmapLogin {
+    height: 100px;
+    width: 800px;
+    margin-left: 310px;
+    margin-right: 100px;
 }
 
 .body {
@@ -305,9 +314,10 @@
 }
 
 .IGFeed {
-    margin-top: 465px;
-    margin-left: 505px;
-    margin-right: -200px;
+    margin-left: 510px;
+    margin-top: -385px;
+    float: left;
+    clear: left;
     font-size: 30px;
     color: #F0FFFF;
 }
@@ -329,6 +339,12 @@
     text-align: center;
     font-size: 20px;
 
+}
+
+.LiveData {
+    margin-left: 400px;
+    margin-top: 50px;
+    text-align: center;
 }
 
 .menu {
