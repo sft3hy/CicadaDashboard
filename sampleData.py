@@ -292,26 +292,29 @@ class AttributeData:
         # if show:
         #     plt.show()
 
-
     # creates graphs of the attributes for each star rating
     def createAttributeGraphs(self, doublePlot):
         labels = []
         attributesTrue = []
         attributesFalse = []
         dictionary = {}
+        avgStars = 0
+        numReviews = 0
 
-        # fills the dictionary with all the attributes found in 
+        # fills the dictionary with all the attributes found in
         # reviews with the star rating passed in or those that round up
         # or down to the star rating passed in
         if doublePlot:
             for i in self.data.index:
                 if self.data.iloc[i]['name'] == self.restaurant and self.data.iloc[i]['state'] in self.states:
                     self.getAttributes(self.data, i, dictionary)
+                    avgStars += int(self.data.iloc[i]['stars'])
+                    numReviews += 1
         else:
             for i in self.data.index:
                 if self.round_up(self.data.iloc[i]['stars']) == self.star and self.data.iloc[i]['state'] in self.states:
                     self.getAttributes(self.data, i, dictionary)
-        
+
         # gets rid of irrelevant data and fills arrays needed to plot data
         for key in dictionary:
             self.checkIfRelevant(key, dictionary)
@@ -319,8 +322,9 @@ class AttributeData:
                 labels.append(key)
                 attributesFalse.append(dictionary[key][0])
                 attributesTrue.append(dictionary[key][1])
-
-        return labels, attributesTrue, attributesFalse
+        if numReviews != 0:
+            avgStars = avgStars / numReviews
+        return labels, attributesTrue, attributesFalse, avgStars
         #self.plotAttributeGraphs(data, stars, labels, attributesTrue, attributesFalse, show)
         #runThroughDictionary(dictionary)
 

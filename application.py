@@ -1074,7 +1074,7 @@ def update_attribute_chart(star_chosen, state_chosen, version_shown, restaurant1
     a.updateStates(state_chosen)
     if version_shown == 1:
         a.updateStar(star_chosen)
-        labels, attributesTrue, attributesFalse = a.createAttributeGraphs(False)
+        labels, attributesTrue, attributesFalse, avgStars = a.createAttributeGraphs(False)
         attributeCount = go.Figure(data=[
             go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
             go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
@@ -1087,32 +1087,36 @@ def update_attribute_chart(star_chosen, state_chosen, version_shown, restaurant1
         return attributeCount
     else:
         a.updateRestaurant(restaurant1)
-        labels, attributesTrue, attributesFalse = a.createAttributeGraphs(True)
+        labels, attributesTrue, attributesFalse, avgStars1 = a.createAttributeGraphs(True)
         attributeCount = make_subplots(rows=2, cols=1, vertical_spacing=.3)
 
         attributeCount.add_trace(
-                go.Bar(name='True', x=labels, y=attributesTrue, marker_color='darkblue'),
+                go.Bar(x=labels, y=attributesTrue, marker_color='darkblue', legendgroup='restaurant1', name=str(restaurant1) + ": True"),
             row=1, col=1
         )
         attributeCount.add_trace(
-            go.Bar(name='False', x=labels, y=attributesFalse, marker_color='lightblue'),
+            go.Bar(x=labels, y=attributesFalse, marker_color='lightblue', legendgroup='restaurant1', name=str(restaurant1) + ": False"),
             row=1, col=1
         )
 
         a.updateRestaurant(restaurant2)
-        labels, attributesTrue, attributesFalse = a.createAttributeGraphs(True)
+        labels, attributesTrue, attributesFalse, avgStars2 = a.createAttributeGraphs(True)
 
         attributeCount.add_trace(
-            go.Bar(showlegend=False, x=labels, y=attributesTrue, marker_color='darkblue'),
+            go.Bar(x=labels, y=attributesTrue, marker_color='darkblue', legendgroup='restaurant2', name=str(restaurant2) + ": True"),
             row=2, col=1
         )
 
         attributeCount.add_trace(
-            go.Bar(showlegend=False, x=labels, y=attributesFalse, marker_color='lightblue'),
+            go.Bar(x=labels, y=attributesFalse, marker_color='lightblue', legendgroup='restaurant2', name=str(restaurant2) + ": False"),
             row=2, col=1
         )
-
-        attributeCount.update_layout(showlegend=True, height=1000, width=800, title_text=str(restaurant1) + " vs " + str(restaurant2))
+        if restaurant1 in replacements:
+            restaurant1 = replacements[restaurant1]
+        if restaurant2 in replacements:
+            restaurant2 = replacements[restaurant2]
+        attributeCount.update_layout(showlegend=True, height=1000, width=800, title_text=str(restaurant1) + " (Average Stars: " + str(a.round_up(avgStars1, 2)) +
+        ") vs " + str(restaurant2) + " (Average Stars: " + str(a.round_up(avgStars2, 2)) + ")")
         with open('attributeCount.pkl', 'wb') as output:
             pickle.dump(attributeCount, output, pickle.HIGHEST_PROTOCOL)
     return attributeCount
