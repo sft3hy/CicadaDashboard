@@ -401,7 +401,7 @@ def update_heatmap():
     username = "user"
     password = "RFofxtKVWVb4"
 
-    driver = webdriver.Chrome("/Users/samueltownsend/PycharmProjects/AWSDashboard/chromedriver")
+    driver = webdriver.Chrome("chromedriver.exe")
 
     url = "http://50.17.183.33/clickheat/index.php"
 
@@ -476,11 +476,10 @@ def generateLiveData():
                         forCard.append(dbc.ListGroupItem(a))
             else:
                 forCard.append(dbc.ListGroupItem(str(l).replace('[[', '\n[').replace(']]', ']')))
-    print(forCard)
+    # print(forCard)
     if len(forMap) == 0:
         forMap = None
     return forCard, forMap
-
 
 
 
@@ -1411,10 +1410,10 @@ def update_user_text(user, productDrop):
     if previous.initialValue is True:
         previous.initialValue = False
         return [], '', ''
-    elif user is None:
-        return [], '', ''
     elif previous.product != productDrop:
         previous.product = productDrop
+        return [], '', ''
+    elif user is None:
         return [], '', ''
     else:
         userList = user.split(',')
@@ -1462,7 +1461,7 @@ def update_user_text(user, productDrop):
                ])
 def update_product_text(product):
     if product is None:
-        return dash.no_update, dash.no_update
+        return '', ''
     productList = product.split(',')
     product_name = productList[0]
     product_id = productList[1]
