@@ -1,3 +1,8 @@
+from WebData import LiveWebData
+from WebData import WebData
+import time
+from random import randint
+from selenium import webdriver
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -389,9 +394,99 @@ for line in tracking:
         userDropdown.append({"label": line['name_y'], "value": line['name_y'] + ',' + line['user_id'] + ',' + line['name_x']})
         used_id.append(line['user_id'])
 
+randHeat = randint(0, 999999)
+heatmap_pathname = "static/images/heatmaps/" + str(randHeat) + ".png"
+def update_heatmap():
+
+    username = "user"
+    password = "RFofxtKVWVb4"
+
+    driver = webdriver.Chrome("/Users/samueltownsend/PycharmProjects/AWSDashboard/chromedriver")
+
+    url = "http://50.17.183.33/clickheat/index.php"
+
+    driver.get(url)
+
+    driver.find_element_by_name("login").send_keys(username)
+    driver.find_element_by_name("pass").send_keys(password)
+    driver.find_element_by_css_selector("input[type=\"submit\" i]").click()
+    driver.find_element_by_id("divPanel").click()
+
+    time.sleep(2)
+    driver.save_screenshot(heatmap_pathname)
+    time.sleep(1)
+# update_heatmap()
+
+
+# get live data from wordpress site
+def generateLiveData():
+    liveReporting = LiveWebData()
+    reporting = WebData()
+    liveData = []
+    forMap = []
+
+    # Live Users
+    liveUsers = liveReporting.active_users()
+    liveData.append("Active Users: " + str(liveUsers))
+
+    # # Live Locations
+    # liveLocations = liveReporting.users_per_location()
+    # liveLocations = str(liveLocations).replace('],', '\n').replace('[', '').replace(']','').replace('\'', '')
+    # liveData.append("Active Locations: " + liveLocations)
+    #
+    # # Live Countries
+    # liveCountries = liveReporting.users_per_countries()
+    # liveCountries = str(liveCountries).replace('],', '\n').replace('[', '').replace(']', '').replace('\'', '')
+    # liveData.append("Countries Active: " + liveCountries)
+    #
+    # # Live Regions
+    # liveRegions = liveReporting.users_per_region()
+    # liveRegions = str(liveRegions).replace('],', '\n').replace('[', '').replace(']', '').replace('\'', '')
+    # liveData.append("Regions Active: " + liveRegions)
+    #
+    # # Live Cities
+    # liveCities = liveReporting.users_per_city()
+    # liveCities = str(liveCities).replace('],', '\n').replace('[', '').replace(']', '').replace('\'', '')
+    # liveData.append("Cities Active: " + liveCities)
+
+    # Live Lat Long
+    liveCoords = liveReporting.users_per_lat_long()
+    forMap = pd.DataFrame(liveCoords)
+
+    liveCoords = str(liveCoords).replace('],', '\n').replace('[', '').replace(']', '').replace('\'', '')
+    liveData.append("Active Coordinates: " + liveCoords)
+
+    # Live Pages
+    livePages = liveReporting.users_per_page()
+    livePages = str(livePages).replace('],', '\n').replace('[', '').replace(']', '').replace('\'', '')
+    liveData.append("Pages Being Viewed: " + livePages)
+
+    # Sessions last 7 days
+    lastSevenDaysPerCountry = reporting.print_results()
+    lastSevenDaysPerCountry = str(lastSevenDaysPerCountry).replace('],', '\n').replace('[', '').replace(']', '').replace('\'', '')
+    liveData.append("Past Seven Days: " + lastSevenDaysPerCountry)
+
+    forCard = []
+    for l in liveData:
+        if type(l) != None:
+            if type(l) == "list":
+                for e in l:
+                    for a in e:
+                        a = str(e).replace('[[', '\n[').replace(']]', ']')
+                        forCard.append(dbc.ListGroupItem(a))
+            else:
+                forCard.append(dbc.ListGroupItem(str(l).replace('[[', '\n[').replace(']]', ']')))
+    print(forCard)
+    if len(forMap) == 0:
+        forMap = None
+    return forCard, forMap
+
+
+
 
 # the main meat of the display, all in this weird html/python hybrid (it's how dash works)
-app.layout = html.Div(
+def serve_layout():
+    return html.Div(
     children=[
         # Header of Dashboard
         html.Div(
@@ -448,6 +543,8 @@ app.layout = html.Div(
                         {"label": "Products vs. Review Count", "value": 4},
                         {"label": "Summary Statistics", "value": 5},
                         {"label": "User Tracking", "value": 6},
+                        {"label": "Click Heat Maps", "value": 7},
+                        {"label": "Live User Data", "value": 8},
                     ],
                     value=1,
                 ),
@@ -595,8 +692,8 @@ app.layout = html.Div(
                 id="dateRange",
                 clearable=True,
                 with_portal=True,
-                start_date="2021-06-01",
-                end_date="2021-06-30",
+                start_date="2021-06-06",
+                end_date="2021-07-06",
                 display_format="YYYY-MM-DD",
             ),
             dbc.Card(
@@ -638,11 +735,6 @@ app.layout = html.Div(
         id="socialMediaCards",
         className="socialMediaCards"
         ),
-        html.Div(html.H6(
-            id="IGFeed",
-            children="Instagram Feed",
-            className="IGFeed",
-        )),
         html.Div(children=[
             dcc.Dropdown(
                     id='productDropdown',
@@ -650,7 +742,7 @@ app.layout = html.Div(
                     placeholder="Select a Product",
                     value="Starbucks,q-9HgzoohzHAEu0VH37WiA",
                     className="restaurantDropdown",
-                    style={'width': '95%'},
+                    style={'width': '100%'},
                 ),
             dbc.Card([
                  dbc.CardBody(
@@ -677,7 +769,7 @@ app.layout = html.Div(
                     placeholder="Select a User",
                     # value="Melissa,tCqYnhAdQhPO3JAAnc09ig,Starbucks",
                     className="restaurantDropdown",
-                    style={'width': '95%'}
+                    style={'width': '100%'}
                 ),
             dbc.Card([
                  dbc.CardBody(
@@ -700,19 +792,48 @@ app.layout = html.Div(
         html.Div(dbc.CardGroup([
             dbc.Card(dbc.CardBody([
                 html.H5("User Review", className="card-title"),
-                html.P(id="reviewText", className="card-text",),
-                ]),
+                html.P(id="reviewText", className="card-text", ),
+            ]),
                 style={"width": "42rem"},
             ),
-            ]),
+        ]),
 
-        id="review_card",
-        className="reviewCard"
+            id="review_card",
+            className="reviewCard"
         ),
+        html.Div(
+            dbc.Card([html.H4("Reload page to refresh data", className="card-title"),
+                      dbc.ListGroup(generateLiveData()[0]),
+                      ],
+                style={"width": "30rem"},
+                className="card-place"
+            ),
+            className="LiveData",
+            id="LiveData",
+        ),
+
+        html.H6(
+            id="IGFeed",
+            children="Instagram Feed",
+            className="IGFeed",
+        ),
+        html.Div(html.Img(
+            src=heatmap_pathname, width="909", height="500"),
+            id="heatmapLogin", className="heatmapLogin"
+        ),
+        # html.Div(
+        #     children=dcc.Graph(
+        #         id='liveUserMap',
+        #         figure=map,
+        #     ),
+        #     className="liveUserMap", style={'display': 'block'}
+        # ),
     ],
+
     className="background"
 )
 
+app.layout = serve_layout
 
 # make the web-app responsive (so when you click something, it responds)
 @app.callback(
@@ -839,6 +960,25 @@ def display_value(value):
     else:
         return {'display': 'none'}
 
+# Displays Heat Map Login
+@app.callback(Output("heatmapLogin", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value == 7:
+        update_heatmap()
+
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+# Hide chart if anything but the proper radio button is selected
+@app.callback(Output("LiveData", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value == 8:
+        generateLiveData()
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
 
 # Displays User Tracking Map
 @app.callback(Output("productCard", "style"), [Input("radios", "value")])
@@ -858,17 +998,6 @@ def display_value(value, contents):
         return {'display': 'block'}
     else:
         return {'display': 'none'}
-
-
-# @app.callback(
-#     Output("userCardOnly", "style"),
-#     [Input("radios", "value"), Input("userDropdown", "value"),
-#      ])
-# def display_value(value, contents):
-#     if value == 6 and contents:
-#         return {'display': 'block'}
-#     else:
-#         return {'display': 'none'}
 
 
 # Displays User Tracking Map
@@ -932,7 +1061,7 @@ def display_value(value, stars_or_no):
 
 @app.callback(Output("card", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value != 2 and value != 5 and value != 6:
+    if value == 1 or value == 3 or value == 4:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -1036,6 +1165,28 @@ def makeMap(state_chosen):
     with open('ma.pkl', 'wb') as output:
         pickle.dump(ma, output, pickle.HIGHEST_PROTOCOL)
     return ma
+
+@app.callback(
+    Output('liveUserMap', 'figure'),
+    [Input("radios", "value")])
+def makeUserMap(value):
+    df = generateLiveData()[1]
+    if df is None:
+        return px.scatter_mapbox(mapDF, lat="latitude", lon="longitude")
+    df.columns['latitude', 'longitude', 'count']
+    lum = px.scatter_mapbox(generateLiveData()[1], lat='latitude', lon='longitude', color='count')
+    lum.update_layout(mapbox_style="open-street-map")
+    lum.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    with open('lum.pkl', 'wb') as output:
+        pickle.dump(lum, output, pickle.HIGHEST_PROTOCOL)
+    return lum
+
+@app.callback(Output("liveUserMap", "style"), [Input("radios", "value")])
+def display_value(value):
+    if value == 8:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
 
 for n in noGood:
     formattedStars = formattedStars[formattedStars.name != n]
@@ -1211,13 +1362,8 @@ def update_card_text(dropdown_value, start_date, end_date):
         caption3 = caption3[0:350] + "..."
     caption3 += " Date: " + str(socialMediaDFs[newsNames.index(dropdown_value)].date.to_list()[2])
 
+    correct_img = imgList[0]
 
-    try:
-        correct_img = imgList[1]
-    except IndexError:
-        imgList = newsDF[newsDF['restaurant'].str.contains(dropdown_value)]['imageUrl'].to_list()
-        correct_img = imgList[0]
-    all_titles = ""
     each_article = []
     for i in range(len(article_list)):
         if start_date <= date_list[i] <= end_date:
