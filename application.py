@@ -1390,7 +1390,6 @@ def update_dropdown(state_chosen, overall):
     return toReturn
 
 
-# Please Push
 @app.callback(Output("userDropdown", "options"), Input("productDropdown", "value"))
 def update_user_list(product):
     if product is None:
