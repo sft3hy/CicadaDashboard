@@ -1332,6 +1332,11 @@ def update_product_text(product):
             dbc.ListGroupItem("Business ID: " + str(product_id)),
             dbc.ListGroupItem("Total Reviews: " + str(total_review)),
             dbc.ListGroupItem("Average Approval Rating: " + str(avg_stars)),
+            dbc.ListGroupItem("5 Star Users", id="button-item5", n_clicks=0, action=True),
+            dbc.ListGroupItem("4 Star Users", id="button-item4", n_clicks=0, action=True),
+            dbc.ListGroupItem("3 Star Users", id="button-item3", n_clicks=0, action=True),
+            dbc.ListGroupItem("2 Star Users", id="button-item2", n_clicks=0, action=True),
+            dbc.ListGroupItem("1 Star Users", id="button-item1", n_clicks=0, action=True),
         ]
     )
     each_business = [list_group]
