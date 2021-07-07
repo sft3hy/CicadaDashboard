@@ -347,18 +347,18 @@ for r in newsDF.restaurant.unique():
     dropDownRestaurants.append({"label": r, 'value': r})
 correct_img = ""
 
-with open("selectedTrackingData.json", encoding="UTF-8") as f:
-    tracking = json.load(f)
+# with open("selectedTrackingData.json", encoding="UTF-8") as f:
+#     tracking = json.load(f)
 
-totalProductList = []
-nameList = []
-user_ids = []
-for line in tracking:
-    if line['name_business'] not in totalProductList:
-        totalProductList.append(line['name_business'])
-    if {"label": line['user_id'], "value": line['user_id']} not in user_ids:
-        nameList.append({"label": line['name_user'], "value": line['name_user'] + ',' + line['user_id']})
-        user_ids.append({"label": line['user_id'], "value": line['user_id']})
+# totalProductList = []
+# nameList = []
+# user_ids = []
+# for line in tracking:
+#     if line['name_business'] not in totalProductList:
+#         totalProductList.append(line['name_business'])
+#     if {"label": line['user_id'], "value": line['user_id']} not in user_ids:
+#         nameList.append({"label": line['name_user'], "value": line['name_user'] + ',' + line['user_id']})
+#         user_ids.append({"label": line['user_id'], "value": line['user_id']})
 
 
 productDF = pd.read_json("selectedTrackingData.json")
@@ -372,10 +372,22 @@ for n in noGood:
     productDF = productDF[productDF.name_business != n]
 productDF = productDF.replace(replacements)
 
-businessDropdown = [{"label": "All", "value": "All"}]
-for b in data.name.unique():
-    # dropDownRestaurants.append(dbc.DropdownMenuItem(r, id=r))
-    businessDropdown.append({"label": b, 'value': b})
+mvpProductsDF = pd.read_json("mvpFinal.json")
+
+businessDropdown = []
+userDropdown = []
+with open("mvpFinal.json", encoding="UTF-8") as f:
+    tracking = json.load(f)
+
+business_id = []
+used_id = []
+for line in tracking:
+    if line['business_id'] not in business_id:
+        businessDropdown.append({"label": line['name_x'], "value": line['name_x'] + ',' + line['business_id']})
+        business_id.append(line['business_id'])
+    if line['user_id'] not in used_id:
+        userDropdown.append({"label": line['name_y'], "value": line['name_y'] + ',' + line['user_id'] + ',' + line['name_x']})
+        used_id.append(line['user_id'])
 
 
 # the main meat of the display, all in this weird html/python hybrid (it's how dash works)
@@ -635,8 +647,8 @@ app.layout = html.Div(
             dcc.Dropdown(
                     id='productDropdown',
                     options=businessDropdown,
-                    value='All',
                     placeholder="Select a Product",
+                    value="Starbucks,q-9HgzoohzHAEu0VH37WiA",
                     className="restaurantDropdown",
                     style={'width': '95%'},
                 ),
@@ -650,7 +662,7 @@ app.layout = html.Div(
                          ),
                      ]
                  ), ],
-                style={"width": "10rem"},
+                style={"width": "15rem"},
                 className="card-place"
             ),
             ],
@@ -661,9 +673,9 @@ app.layout = html.Div(
         html.Div(children=[
             dcc.Dropdown(
                     id='userDropdown',
-                    options=nameList,
+                    options=userDropdown,
                     placeholder="Select a User",
-                    value="Vincent,3FjtcRncZ7nSdDROr1K-nQ",
+                    # value="Melissa,tCqYnhAdQhPO3JAAnc09ig,Starbucks",
                     className="restaurantDropdown",
                     style={'width': '95%'}
                 ),
@@ -677,13 +689,25 @@ app.layout = html.Div(
                          ),
                      ]
                  ), ],
-                style={"width": "10rem"},
-                className="card-place"
+                style={"width": "15rem"},
+                className="card-place",
             ),
             ],
             id="userCard",
             className="dropAndCardUser",
             # style={"width": "10%"},
+        ),
+        html.Div(dbc.CardGroup([
+            dbc.Card(dbc.CardBody([
+                html.H5("User Review", className="card-title"),
+                html.P(id="reviewText", className="card-text",),
+                ]),
+                style={"width": "42rem"},
+            ),
+            ]),
+
+        id="review_card",
+        className="reviewCard"
         ),
     ],
     className="background"
@@ -836,6 +860,17 @@ def display_value(value, contents):
         return {'display': 'none'}
 
 
+# @app.callback(
+#     Output("userCardOnly", "style"),
+#     [Input("radios", "value"), Input("userDropdown", "value"),
+#      ])
+# def display_value(value, contents):
+#     if value == 6 and contents:
+#         return {'display': 'block'}
+#     else:
+#         return {'display': 'none'}
+
+
 # Displays User Tracking Map
 @app.callback(Output("checklist", "style"), [Input("radios", "value")])
 def display_value(value):
@@ -918,6 +953,24 @@ def display_value(value):
     else:
         return {'display': 'none'}
 
+
+# Handles the Review Card to keep hide it when product changes
+class previous:
+    productState = ""
+
+
+@app.callback(Output("review_card", "style"), [Input("radios", "value"), Input("userDropdown", "value"), Input("productDropdown", "value")])
+def display_value(value, userdropdown, productDrop):
+    newDropVal = False
+    if previous.productState != productDrop:
+        newDropVal = True
+        previous.productState = productDrop
+    if value == 6 and userdropdown and not newDropVal:
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
 @app.callback(
     Output('bar-chart', 'figure'),
     [Input("checklist", "value")])
@@ -942,20 +995,21 @@ def makeNameVsReviewCount(state_chosen):
     [Input("userDropdown", "value"),
      Input("productDropdown", "value")])
 def makeUserMap(user_Chosen, productChosen):
+    if productChosen is None or user_Chosen is None:
+        return dash.no_update
+    productList = productChosen.split(',')
+    product_name = productList[0]
+    product_id = productList[1]
     userList = user_Chosen.split(',')
     user_name = userList[0]
     user_id = userList[1]
-    if productChosen == "All":
-        productData = productDF[productDF["name_user"] == user_name]
-        productData = productData[productData['user_id'] == user_id]
-    else:
-        productData = productDF[productDF["name_user"] == user_name]
-        productData = productData[productData['user_id'] == user_id]
-        productData = productData[productData["name_business"] == productChosen]
-    userMapFill = px.scatter_mapbox(productData, lat="latitude", lon="longitude", hover_name="name_business",
-                           hover_data=["stars_user", "review_count"],
-                           color="stars_business", zoom=4, height=500, title="Individual Products", labels={
-            "stars_user": "Stars", "review_count": "Review Count", "latitude": "Latitude",
+    productData = mvpProductsDF[mvpProductsDF["name_y"] == user_name]
+    productData = mvpProductsDF[mvpProductsDF['user_id'] == user_id]
+    productData = mvpProductsDF[mvpProductsDF["name_x"] == product_name]
+    userMapFill = px.scatter_mapbox(productData, lat="latitude", lon="longitude", hover_name="name_x",
+                           hover_data=["stars_y", "review_count_x"],
+                           color="stars_x", zoom=4, height=500, title="Individual Products", labels={
+            "stars_y": "Stars", "review_count_x": "Review Count", "latitude": "Latitude",
             "longitude": "Longitude"
         })
     userMapFill.update_layout(mapbox_style="open-street-map")
@@ -1003,7 +1057,6 @@ def makeNameVsStarsChart(state_chosen):
     with open('nameVsStars.pkl', 'wb') as output:
         pickle.dump(nameVsStars, output, pickle.HIGHEST_PROTOCOL)
     return nameVsStars
-
 
 
 # Radio buttons for changing stars in attribute graph
@@ -1187,66 +1240,112 @@ def update_dropdown(state_chosen, overall):
     return toReturn
 
 
+@app.callback(Output("userDropdown", "options"), Input("productDropdown", "value"))
+def update_user_list(product):
+    if product is None:
+        return dash.no_update
+    productLine = product.split(',')
+    product_name = productLine[0]
+    return [o for o in userDropdown if product_name in o["value"]]
+
+
+# Handles the Review Card to keep hide it when product changes
+class newprevious:
+    product = "Starbucks,q-9HgzoohzHAEu0VH37WiA"
+    i = 0
+    previousNum = 0
+
+
 @app.callback([Output("user-text", "children"),
                Output("user-title", "children"),
+               Output("reviewText", "children"),
                ],
-              [Input("userDropdown", "value")
+              [Input("userDropdown", "value"),
+               Input("productDropdown", "value")
                ])
-def update_user_text(user):
-    userList = user.split(',')
-    user_name = userList[0]
-    user_id = userList[1]
-    review_num = ""
-    yelp_since = ""
-    elite = ""
-    avg_star = ""
-    for i in productDF.index.unique():
-        if productDF.iloc[i]['user_id'] == user_id:
-            review_num = productDF.iloc[i]['review_count']
-            yelp_since = productDF.iloc[i]["yelping_since"]
-            elite = productDF.iloc[i]["elite"]
-            avg_star = productDF.iloc[i]["average_stars"]
-            break
+def update_user_text(user, productDrop):
+    if user is None:
+        return dash.no_update, dash.no_update, dash.no_update
+    else:
+        userList = user.split(',')
+        user_name = userList[0]
+        user_id = userList[1]
+        review_num, yelp_since, elite, avg_star, date_rev, text, given, empty = "", "", "", "", "", "", "", ""
+        for i in mvpProductsDF.index.unique():
+            if mvpProductsDF.iloc[i]['user_id'] == user_id:
+                review_num = mvpProductsDF.iloc[i]['review_count_y']
+                yelp_since = mvpProductsDF.iloc[i]["yelping_since"]
+                if mvpProductsDF.iloc[i]["elite"] == '':
+                    elite = 'N/A'
+                else:
+                    elite = mvpProductsDF.iloc[i]["elite"]
+                avg_star = mvpProductsDF.iloc[i]["average_stars"]
+                given = mvpProductsDF.iloc[i]["stars_y"]
+                date_rev = mvpProductsDF.iloc[i]["date"]
+                text = mvpProductsDF.iloc[i]["text"]
+                break
 
+        list_group = dbc.ListGroup(
+            [
+                dbc.ListGroupItem("User ID: " + str(user_id)),
+                dbc.ListGroupItem("Total Reviews: " + str(review_num)),
+                dbc.ListGroupItem("Yelping Since: " + str(yelp_since)),
+                dbc.ListGroupItem("Elite: " + str(elite)),
+                dbc.ListGroupItem("Average Approval Rating: " + str(avg_star)),
+                dbc.ListGroupItem("Given Approval Rating: " + str(given)),
+            ]
+        )
+        review_group = dbc.ListGroup(
+            [
+                dbc.ListGroupItem("Date: " + str(date_rev)),
+                dbc.ListGroupItem("Stars: " + str(given)),
+                dbc.ListGroupItem("Review: " + str(text)),
+            ]
+        )
+        with open('user.pkl', 'wb') as output:
+            pickle.dump(user, output, pickle.HIGHEST_PROTOCOL)
+        each_user = []
+        newprevious.previousNum = newprevious.i
+        newDropVal = False
+        if newprevious.product != productDrop:
+            newDropVal = True
+            newprevious.i += 1
+            newprevious.product = productDrop
+        if newDropVal and newprevious.i > newprevious.previousNum or not user:
+            return each_user, empty, empty
+        else:
+            return list_group, user_name, review_group
+
+
+@app.callback([Output("product-text", "children"),
+               Output("product-title", "children"),
+               ],
+              [Input("productDropdown", "value")
+               ])
+def update_product_text(product):
+    if product is None:
+        return dash.no_update, dash.no_update
+    productList = product.split(',')
+    product_name = productList[0]
+    product_id = productList[1]
+    total_review = ""
+    avg_stars = ""
+    for i in mvpProductsDF.index.unique():
+        if mvpProductsDF.iloc[i]['name_x'] == product_name:
+            total_review = mvpProductsDF.iloc[i]["review_count_x"]
+            avg_stars = mvpProductsDF.iloc[i]["stars_x"]
+            break
     list_group = dbc.ListGroup(
         [
-            dbc.ListGroupItem("User ID: " + str(user_id)),
-            dbc.ListGroupItem("Total Reviews: " + str(review_num)),
-            dbc.ListGroupItem("Yelping Since: " + str(yelp_since)),
-            dbc.ListGroupItem("Elite: " + str(elite)),
-            dbc.ListGroupItem("Average Approval Rating: " + str(avg_star)),
+            dbc.ListGroupItem("Business ID: " + str(product_id)),
+            dbc.ListGroupItem("Total Reviews: " + str(total_review)),
+            dbc.ListGroupItem("Average Approval Rating: " + str(avg_stars)),
         ]
     )
-    each_user = [list_group]
-    return each_user, user_name
-
-
-# @app.callback([Output("product-text", "children"),
-#                Output("product-title", "children"),
-#                ],
-#               [Input("prodcutDropdown", "value")
-#                ])
-# def update_product_text(product):
-#
-#     for i in productDF.index.unique():
-#         if productDF.iloc[i]['user_id'] == user_id:
-#             review_num = productDF.iloc[i]['review_count']
-#             yelp_since = productDF.iloc[i]["yelping_since"]
-#             elite = productDF.iloc[i]["elite"]
-#             avg_star = productDF.iloc[i]["average_stars"]
-#             break
-#
-#     list_group = dbc.ListGroup(
-#         [
-#             dbc.ListGroupItem("User ID: " + str(user_id)),
-#             dbc.ListGroupItem("Total Reviews: " + str(review_num)),
-#             dbc.ListGroupItem("Yelping Since: " + str(yelp_since)),
-#             dbc.ListGroupItem("Elite: " + str(elite)),
-#             dbc.ListGroupItem("Average Approval Rating: " + str(avg_star)),
-#         ]
-#     )
-#     each_user = [list_group]
-#     return each_user, user_name
+    each_business = [list_group]
+    with open('product.pkl', 'wb') as output:
+        pickle.dump(product, output, pickle.HIGHEST_PROTOCOL)
+    return each_business, product_name
 
 # run the app at port 8080
 if __name__ == "__main__":
