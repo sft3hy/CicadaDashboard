@@ -957,6 +957,8 @@ def display_value(value):
 # Handles the Review Card to keep hide it when product changes
 class previous:
     productState = ""
+    product = "Starbucks,q-9HgzoohzHAEu0VH37WiA"
+    initialValue = True
 
 
 @app.callback(Output("review_card", "style"), [Input("radios", "value"), Input("userDropdown", "value"), Input("productDropdown", "value")])
@@ -999,7 +1001,6 @@ def makeUserMap(user_Chosen, productChosen):
         return dash.no_update
     productList = productChosen.split(',')
     product_name = productList[0]
-    product_id = productList[1]
     userList = user_Chosen.split(',')
     user_name = userList[0]
     user_id = userList[1]
@@ -1249,13 +1250,6 @@ def update_user_list(product):
     return [o for o in userDropdown if product_name in o["value"]]
 
 
-# Handles the Review Card to keep hide it when product changes
-class newprevious:
-    product = "Starbucks,q-9HgzoohzHAEu0VH37WiA"
-    i = 0
-    previousNum = 0
-
-
 @app.callback([Output("user-text", "children"),
                Output("user-title", "children"),
                Output("reviewText", "children"),
@@ -1264,8 +1258,14 @@ class newprevious:
                Input("productDropdown", "value")
                ])
 def update_user_text(user, productDrop):
-    if user is None:
-        return dash.no_update, dash.no_update, dash.no_update
+    if previous.initialValue is True:
+        previous.initialValue = False
+        return [], '', ''
+    elif user is None:
+        return [], '', ''
+    elif previous.product != productDrop:
+        previous.product = productDrop
+        return [], '', ''
     else:
         userList = user.split(',')
         user_name = userList[0]
@@ -1302,19 +1302,7 @@ def update_user_text(user, productDrop):
                 dbc.ListGroupItem("Review: " + str(text)),
             ]
         )
-        with open('user.pkl', 'wb') as output:
-            pickle.dump(user, output, pickle.HIGHEST_PROTOCOL)
-        each_user = []
-        newprevious.previousNum = newprevious.i
-        newDropVal = False
-        if newprevious.product != productDrop:
-            newDropVal = True
-            newprevious.i += 1
-            newprevious.product = productDrop
-        if newDropVal and newprevious.i > newprevious.previousNum or not user:
-            return each_user, empty, empty
-        else:
-            return list_group, user_name, review_group
+        return list_group, user_name, review_group
 
 
 @app.callback([Output("product-text", "children"),
