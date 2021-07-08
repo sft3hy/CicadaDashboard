@@ -12,10 +12,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input, State
-import requests
-from datetime import date
+# import requests
+# from datetime import date
 from plotly.subplots import make_subplots
-import re
+# import re
 import json
 from sampleData import AttributeData
 import os
@@ -401,7 +401,7 @@ def update_heatmap():
     username = "user"
     password = "RFofxtKVWVb4"
 
-    driver = webdriver.Chrome("chromedriver.exe")
+    driver = webdriver.Chrome("/Users/samueltownsend/Downloads/chromedriver")
 
     url = "http://50.17.183.33/clickheat/index.php"
 
@@ -412,9 +412,6 @@ def update_heatmap():
     driver.find_element_by_css_selector("input[type=\"submit\" i]").click()
     driver.find_element_by_id("divPanel").click()
 
-    time.sleep(2)
-    driver.save_screenshot(heatmap_pathname)
-    time.sleep(1)
 # update_heatmap()
 
 
@@ -429,11 +426,11 @@ def generateLiveData():
     liveUsers = liveReporting.active_users()
     liveData.append("Active Users: " + str(liveUsers))
 
-    # # Live Locations
-    # liveLocations = liveReporting.users_per_location()
-    # liveLocations = str(liveLocations).replace('],', '\n').replace('[', '').replace(']','').replace('\'', '')
-    # liveData.append("Active Locations: " + liveLocations)
-    #
+    # Live Locations
+    liveLocations = liveReporting.users_per_location()
+    liveLocations = str(liveLocations).replace('],', '\n').replace('[', '').replace(']','').replace('\'', '')
+    liveData.append("Active Locations: " + liveLocations)
+
     # # Live Countries
     # liveCountries = liveReporting.users_per_countries()
     # liveCountries = str(liveCountries).replace('],', '\n').replace('[', '').replace(']', '').replace('\'', '')
@@ -451,8 +448,9 @@ def generateLiveData():
 
     # Live Lat Long
     liveCoords = liveReporting.users_per_lat_long()
-    forMap = pd.DataFrame(liveCoords)
-
+    if liveCoords is not None:
+        forMap = [dict(zip(['latitude', 'longitude', 'coun'], l)) for l in liveCoords]
+        forMap = pd.DataFrame(forMap).astype(float)
     liveCoords = str(liveCoords).replace('],', '\n').replace('[', '').replace(']', '').replace('\'', '')
     liveData.append("Active Coordinates: " + liveCoords)
 
@@ -461,10 +459,10 @@ def generateLiveData():
     livePages = str(livePages).replace('],', '\n').replace('[', '').replace(']', '').replace('\'', '')
     liveData.append("Pages Being Viewed: " + livePages)
 
-    # Sessions last 7 days
-    lastSevenDaysPerCountry = reporting.print_results()
-    lastSevenDaysPerCountry = str(lastSevenDaysPerCountry).replace('],', '\n').replace('[', '').replace(']', '').replace('\'', '')
-    liveData.append("Past Seven Days: " + lastSevenDaysPerCountry)
+    # # Sessions last 7 days
+    # lastSevenDaysPerCountry = reporting.print_results()
+    # lastSevenDaysPerCountry = str(lastSevenDaysPerCountry).replace('],', '\n').replace('[', '').replace(']', '').replace('\'', '')
+    # liveData.append("Past Seven Days: " + lastSevenDaysPerCountry)
 
     forCard = []
     for l in liveData:
@@ -476,7 +474,6 @@ def generateLiveData():
                         forCard.append(dbc.ListGroupItem(a))
             else:
                 forCard.append(dbc.ListGroupItem(str(l).replace('[[', '\n[').replace(']]', ']')))
-    # print(forCard)
     if len(forMap) == 0:
         forMap = None
     return forCard, forMap
@@ -542,7 +539,6 @@ def serve_layout():
                         {"label": "Products vs. Review Count", "value": 4},
                         {"label": "Summary Statistics", "value": 5},
                         {"label": "User Tracking", "value": 6},
-                        {"label": "Click Heat Maps", "value": 7},
                         {"label": "Live User Data", "value": 8},
                     ],
                     value=1,
@@ -759,7 +755,6 @@ def serve_layout():
             ],
             id="productCard",
             className="dropAndCardProduct",
-            # style={"width": "40px"},
         ),
         html.Div(children=[
             dcc.Dropdown(
@@ -786,7 +781,6 @@ def serve_layout():
             ],
             id="userCard",
             className="dropAndCardUser",
-            # style={"width": "10%"},
         ),
         html.Div(dbc.CardGroup([
             dbc.Card(dbc.CardBody([
@@ -804,29 +798,29 @@ def serve_layout():
             dbc.Card([html.H4("Reload page to refresh data", className="card-title"),
                       dbc.ListGroup(generateLiveData()[0]),
                       ],
-                style={"width": "30rem"},
+                style={"width": "24rem"},
                 className="card-place"
             ),
             className="LiveData",
             id="LiveData",
         ),
-
         html.H6(
             id="IGFeed",
             children="Instagram Feed",
             className="IGFeed",
         ),
-        html.Div(html.Img(
-            src=heatmap_pathname, width="909", height="500"),
-            id="heatmapLogin", className="heatmapLogin"
+        html.Div([dbc.Button(
+            "Launch Heatmap", id="generate-heatmap-button", className="loadHeatButton", n_clicks=0
         ),
-        # html.Div(
-        #     children=dcc.Graph(
-        #         id='liveUserMap',
-        #         figure=map,
-        #     ),
-        #     className="liveUserMap", style={'display': 'block'}
-        # ),
+            html.Span(id="loading", style={"float": "right"}), ]),
+        html.Div(
+            children=dcc.Graph(
+                id='liveUserMap',
+                figure=map,
+            ),
+            className="liveUserMap", style={'display': 'block'}
+        ),
+
     ],
 
     className="background"
@@ -960,14 +954,22 @@ def display_value(value):
         return {'display': 'none'}
 
 # Displays Heat Map Login
-@app.callback(Output("heatmapLogin", "style"), [Input("radios", "value")])
+@app.callback(Output("generate-heatmap-button", "style"), [Input("radios", "value")])
 def display_value(value):
-    if value == 7:
-        update_heatmap()
-
+    if value == 8:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
+
+@app.callback(
+    Output("loading", "children"), [Input("generate-heatmap-button", "n_clicks")]
+)
+def on_button_click(n):
+    if n == 0:
+        return ""
+    else:
+        update_heatmap()
+        return f""
 
 # Hide chart if anything but the proper radio button is selected
 @app.callback(Output("LiveData", "style"), [Input("radios", "value")])
@@ -1171,14 +1173,15 @@ def makeMap(state_chosen):
 def makeUserMap(value):
     df = generateLiveData()[1]
     if df is None:
-        return px.scatter_mapbox(mapDF, lat="latitude", lon="longitude")
-    df.columns['latitude', 'longitude', 'count']
-    lum = px.scatter_mapbox(generateLiveData()[1], lat='latitude', lon='longitude', color='count')
-    lum.update_layout(mapbox_style="open-street-map")
-    lum.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    with open('lum.pkl', 'wb') as output:
-        pickle.dump(lum, output, pickle.HIGHEST_PROTOCOL)
-    return lum
+        return px.scatter_mapbox(mapDF, lat='latitude', lon="longitude", zoom=8, height=400, width=600)
+    else:
+        lum = px.scatter_mapbox(df, lat='latitude', lon='longitude', color='coun', height=400, width=600, size='coun', zoom=1,
+                                labels={'coun': 'Active Users'})
+        lum.update_layout(mapbox_style="open-street-map")
+        lum.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+        with open('lum.pkl', 'wb') as output:
+            pickle.dump(lum, output, pickle.HIGHEST_PROTOCOL)
+        return lum
 
 @app.callback(Output("liveUserMap", "style"), [Input("radios", "value")])
 def display_value(value):
