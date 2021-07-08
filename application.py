@@ -44,6 +44,8 @@ for n in instaNames:
 #         j+=1
 #     i+=1
 
+# hey
+
 if not os.path.exists("static/images"):
     os.mkdir("static/images")
 
