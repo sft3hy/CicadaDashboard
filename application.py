@@ -1092,6 +1092,9 @@ class previous:
     productState = "Starbucks,q-9HgzoohzHAEu0VH37WiA"
     initialValue = True
     reviewCard = True
+    product_id = ""
+    total_review = ""
+    avg_stars = ""
 
 
 @app.callback(Output("review_card", "style"),
@@ -1425,7 +1428,14 @@ def getUserDataForCards(user_iden, conditions):
     return [review_num, yelp_since, elite, avg_star, given, date_rev, text]
 
 
-@app.callback(Output("userDropdown", "options"),
+@app.callback([Output("userDropdown", "options"),
+               Output("button-itemAll", 'active'),
+               Output("button-item5", 'active'),
+               Output("button-item4", 'active'),
+               Output("button-item3", 'active'),
+               Output("button-item2", 'active'),
+               Output("button-item1", 'active')
+               ],
               [Input("productDropdown", "value"),
                Input("button-itemAll", "n_clicks"),
                Input("button-item5", "n_clicks"),
@@ -1435,29 +1445,35 @@ def getUserDataForCards(user_iden, conditions):
                Input("button-item1", "n_clicks")])
 def update_user_list(product, all, five, four, three, two, one):
     if product is None:
-        return dash.no_update
+        return []
     tierButton = dash.callback_context
     productLine = product.split(',')
     product_name = productLine[0]
     if tierButton.triggered and tierButton.triggered[0]['prop_id'] == "button-itemAll.n_clicks":
-        return [o for o in userDropdown if product_name in o['value'].split(',')[2]]
+        return [o for o in userDropdown if product_name in o['value'].split(',')[2]], True, False, False, False, False, False
     elif tierButton.triggered and tierButton.triggered[0]['prop_id'] == "button-item5.n_clicks":
-        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) >= 4]
+        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) >= 4], \
+               False, True, False, False, False, False
     elif tierButton.triggered and tierButton.triggered[0]['prop_id'] == "button-item4.n_clicks":
-        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) == 3]
+        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) == 3], \
+               False, False, True, False, False, False
     elif tierButton.triggered and tierButton.triggered[0]['prop_id'] == "button-item3.n_clicks":
-        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) == 2]
+        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) == 2], \
+               False, False, False, True, False, False
     elif tierButton.triggered and tierButton.triggered[0]['prop_id'] == "button-item2.n_clicks":
-        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) == 1 and "" not in o["value"].split(',')[4]]
+        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) == 1 and "" not in o["value"].split(',')[4]], \
+               False, False, False, False, True, False
     elif tierButton.triggered and tierButton.triggered[0]['prop_id'] == "button-item1.n_clicks":
-        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) == 1 and "" in o["value"].split(',')[4]]
+        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) == 1 and "" in o["value"].split(',')[4]], \
+               False, False, False, False, False, True
     else:
-        return [o for o in userDropdown if product_name in o["value"].split(',')[2]]
+        return [o for o in userDropdown if product_name in o["value"].split(',')[2]], False, False, False, False, False, False
 
 
 @app.callback([Output("user-text", "children"),
                Output("user-title", "children"),
                Output("reviewText", "children"),
+               Output("userDropdown", "value"),
                ],
               [Input("userDropdown", "value"),
                Input("productDropdown", "value"),
@@ -1473,12 +1489,12 @@ def update_user_text(user, productDrop, all, five, four, three, two, one):
     possibleButtons = ["button-itemAll.n_clicks", "button-item5.n_clicks", "button-item4.n_clicks", "button-item3.n_clicks",
                        "button-item2.n_clicks", "button-item1.n_clicks"]
     if tierButton.triggered and tierButton.triggered[0]['prop_id'] in possibleButtons:
-        return [], '', 'No User Selected'
+        return [], '', 'No User Selected', ''
     elif previous.productState != productDrop:
         previous.productState = productDrop
-        return [], '', 'No User Selected'
+        return [], '', 'No User Selected', dash.no_update
     elif user is None:
-        return [], '', 'No User Selected'
+        return [], '', 'No User Selected', dash.no_update
     else:
         userList = user.split(',')
         user_name = userList[0]
@@ -1503,7 +1519,7 @@ def update_user_text(user, productDrop, all, five, four, three, two, one):
                 dbc.ListGroupItem("Review: " + str(text)),
             ]
         )
-        return list_group, user_name, review_group
+        return list_group, user_name, review_group, dash.no_update
 
 
 @app.callback([Output("product-text", "children"),
@@ -1516,9 +1532,9 @@ def update_product_text(product):
         return '', ''
     productList = product.split(',')
     product_name = productList[0]
-    product_id = productList[1]
-    total_review = ""
-    avg_stars = ""
+    previous.product_id = productList[1]
+    previous.total_review = ""
+    previous.avg_stars = ""
     for i in mvpProductsDF.index.unique():
         if mvpProductsDF.iloc[i]['name_x'] == product_name:
             total_review = mvpProductsDF.iloc[i]["review_count_x"]
@@ -1526,15 +1542,15 @@ def update_product_text(product):
             break
     list_group = dbc.ListGroup(
         [
-            dbc.ListGroupItem("Business ID: " + str(product_id)),
-            dbc.ListGroupItem("Total Reviews: " + str(total_review)),
-            dbc.ListGroupItem("Average Approval Rating: " + str(avg_stars)),
-            dbc.ListGroupItem("All Users", id="button-itemAll", n_clicks=0, action=True),
-            dbc.ListGroupItem("4+ Year Elite Users", id="button-item5", n_clicks=0, action=True),
-            dbc.ListGroupItem("3 Year Elite Users", id="button-item4", n_clicks=0, action=True),
-            dbc.ListGroupItem("2 Year Elite Users", id="button-item3", n_clicks=0, action=True),
-            dbc.ListGroupItem("1 Year Elite Users", id="button-item2", n_clicks=0, action=True),
-            dbc.ListGroupItem("Not Elite Users", id="button-item1", n_clicks=0, action=True),
+            dbc.ListGroupItem("Business ID: " + str(previous.product_id)),
+            dbc.ListGroupItem("Total Reviews: " + str(previous.total_review)),
+            dbc.ListGroupItem("Average Approval Rating: " + str(previous.avg_stars)),
+            dbc.ListGroupItem("All Users", id="button-itemAll", n_clicks=0, action=True, active=False),
+            dbc.ListGroupItem("4+ Year Elite Users", id="button-item5", n_clicks=0, action=True, active=False),
+            dbc.ListGroupItem("3 Year Elite Users", id="button-item4", n_clicks=0, action=True, active=False),
+            dbc.ListGroupItem("2 Year Elite Users", id="button-item3", n_clicks=0, action=True, active=False),
+            dbc.ListGroupItem("1 Year Elite Users", id="button-item2", n_clicks=0, action=True, active=False),
+            dbc.ListGroupItem("Not Elite Users", id="button-item1", n_clicks=0, action=True, active=False),
         ]
     )
     each_business = [list_group]
