@@ -406,16 +406,16 @@ def update_heatmap():
     username = "user"
     password = "RFofxtKVWVb4"
 
-    driver = webdriver.Chrome("/Users/samueltownsend/Downloads/chromedriver")
-
-    url = "http://50.17.183.33/clickheat/index.php"
-
-    driver.get(url)
-
-    driver.find_element_by_name("login").send_keys(username)
-    driver.find_element_by_name("pass").send_keys(password)
-    driver.find_element_by_css_selector("input[type=\"submit\" i]").click()
-    driver.find_element_by_id("divPanel").click()
+    # driver = webdriver.Chrome("/Users/samueltownsend/Downloads/chromedriver")
+    #
+    # url = "http://50.17.183.33/clickheat/index.php"
+    #
+    # driver.get(url)
+    #
+    # driver.find_element_by_name("login").send_keys(username)
+    # driver.find_element_by_name("pass").send_keys(password)
+    # driver.find_element_by_css_selector("input[type=\"submit\" i]").click()
+    # driver.find_element_by_id("divPanel").click()
 
 # update_heatmap()
 
@@ -1105,7 +1105,6 @@ def display_value(value, userdropdown, productDrop):
         newDropVal = True
         previous.productState = productDrop
     if value == 6 and previous.reviewCard:
-        print('here')
         previous.reviewCard = False
         return {'display': 'none'}
     elif value == 6 and userdropdown and not newDropVal:
