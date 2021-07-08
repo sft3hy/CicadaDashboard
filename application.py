@@ -391,7 +391,12 @@ for line in tracking:
         businessDropdown.append({"label": line['name_x'], "value": line['name_x'] + ',' + line['business_id']})
         business_id.append(line['business_id'])
     if line['user_id'] not in used_id:
-        userDropdown.append({"label": line['name_y'], "value": line['name_y'] + ',' + line['user_id'] + ',' + line['name_x']})
+        elite = line['elite']
+        elite_list = elite.split(',')
+        eliteLen = len(elite_list)
+        userDropdown.append({"label": line['name_y'], "value": line['name_y'] + ',' + line['user_id'] + ',' +
+                                                               line['name_x'] + ',' + str(eliteLen) + ',' +
+                                                               str(elite_list)})
         used_id.append(line['user_id'])
 
 randHeat = randint(0, 999999)
@@ -739,7 +744,6 @@ def serve_layout():
                     id='productDropdown',
                     options=businessDropdown,
                     placeholder="Select a Product",
-                    value="Starbucks,q-9HgzoohzHAEu0VH37WiA",
                     className="restaurantDropdown",
                     style={'width': '100%'},
                 ),
@@ -754,7 +758,7 @@ def serve_layout():
                      ]
                  ), ],
                 style={"width": "15rem"},
-                className="card-place"
+                className="card-place",
             ),
             ],
             id="productCard",
@@ -766,7 +770,6 @@ def serve_layout():
                     id='userDropdown',
                     options=userDropdown,
                     placeholder="Select a User",
-                    # value="Melissa,tCqYnhAdQhPO3JAAnc09ig,Starbucks",
                     className="restaurantDropdown",
                     style={'width': '100%'}
                 ),
@@ -1084,18 +1087,26 @@ def display_value(value):
 
 # Handles the Review Card to keep hide it when product changes
 class previous:
-    productState = ""
-    product = "Starbucks,q-9HgzoohzHAEu0VH37WiA"
+    productState = "Starbucks,q-9HgzoohzHAEu0VH37WiA"
     initialValue = True
+    reviewCard = True
 
 
-@app.callback(Output("review_card", "style"), [Input("radios", "value"), Input("userDropdown", "value"), Input("productDropdown", "value")])
+@app.callback(Output("review_card", "style"),
+              [Input("radios", "value"),
+               Input("userDropdown", "value"),
+               Input("productDropdown", "value"),
+               ])
 def display_value(value, userdropdown, productDrop):
     newDropVal = False
     if previous.productState != productDrop:
         newDropVal = True
         previous.productState = productDrop
-    if value == 6 and userdropdown and not newDropVal:
+    if value == 6 and previous.reviewCard:
+        print('here')
+        previous.reviewCard = False
+        return {'display': 'none'}
+    elif value == 6 and userdropdown and not newDropVal:
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -1169,11 +1180,12 @@ def makeMap(state_chosen):
     Output('liveUserMap', 'figure'),
     [Input("radios", "value")])
 def makeUserMap(value):
-    df = generateLiveData()[1]
+    df = generateLiveData()
     if df is None:
         return px.scatter_mapbox(mapDF, lat="latitude", lon="longitude")
+    print(df)
     df.columns['latitude', 'longitude', 'count']
-    lum = px.scatter_mapbox(generateLiveData()[1], lat='latitude', lon='longitude', color='count')
+    lum = px.scatter_mapbox(generateLiveData(), lat='latitude', lon='longitude', color='count')
     lum.update_layout(mapbox_style="open-street-map")
     lum.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
     with open('lum.pkl', 'wb') as output:
@@ -1241,11 +1253,11 @@ def update_attribute_chart(star_chosen, state_chosen, version_shown, restaurant1
         attributeCount = make_subplots(rows=2, cols=1, vertical_spacing=.3)
 
         attributeCount.add_trace(
-                go.Bar(x=labels, y=attributesTrue, marker_color='darkblue', legendgroup='restaurant1', name=str(restaurant1) + ": True"),
+                go.Bar(x=labels, y=attributesTrue, marker_color='darkblue', name=str(restaurant1) + ": True"),
             row=1, col=1
         )
         attributeCount.add_trace(
-            go.Bar(x=labels, y=attributesFalse, marker_color='lightblue', legendgroup='restaurant1', name=str(restaurant1) + ": False"),
+            go.Bar(x=labels, y=attributesFalse, marker_color='lightblue', name=str(restaurant1) + ": False"),
             row=1, col=1
         )
 
@@ -1253,12 +1265,12 @@ def update_attribute_chart(star_chosen, state_chosen, version_shown, restaurant1
         labels, attributesTrue, attributesFalse, avgStars2 = a.createAttributeGraphs(True)
 
         attributeCount.add_trace(
-            go.Bar(x=labels, y=attributesTrue, marker_color='darkblue', legendgroup='restaurant2', name=str(restaurant2) + ": True"),
+            go.Bar(x=labels, y=attributesTrue, marker_color='darkblue', name=str(restaurant2) + ": True"),
             row=2, col=1
         )
 
         attributeCount.add_trace(
-            go.Bar(x=labels, y=attributesFalse, marker_color='lightblue', legendgroup='restaurant2', name=str(restaurant2) + ": False"),
+            go.Bar(x=labels, y=attributesFalse, marker_color='lightblue', name=str(restaurant2) + ": False"),
             row=2, col=1
         )
         if restaurant1 in replacements:
@@ -1390,13 +1402,55 @@ def update_dropdown(state_chosen, overall):
     return toReturn
 
 
-@app.callback(Output("userDropdown", "options"), Input("productDropdown", "value"))
-def update_user_list(product):
+user_categories = ["user_id", 'review_count_y', "yelping_since", "elite", "average_stars", "stars_y", "date", "text"]
+
+
+def getUserDataForCards(user_iden, conditions):
+    review_num, yelp_since, elite, avg_star, date_rev, text, given = "", "", "", "", "", "", ""
+    for i in mvpProductsDF.index.unique():
+        if mvpProductsDF.iloc[i][conditions[0]] == user_iden:
+            review_num = mvpProductsDF.iloc[i][conditions[1]]
+            yelp_since = mvpProductsDF.iloc[i][conditions[2]]
+            if mvpProductsDF.iloc[i][conditions[3]] == '':
+                elite = 'N/A'
+            else:
+                elite = mvpProductsDF.iloc[i][conditions[3]]
+            avg_star = mvpProductsDF.iloc[i][conditions[4]]
+            given = mvpProductsDF.iloc[i][conditions[5]]
+            date_rev = mvpProductsDF.iloc[i][conditions[6]]
+            text = mvpProductsDF.iloc[i][conditions[7]]
+            break
+    return [review_num, yelp_since, elite, avg_star, given, date_rev, text]
+
+
+@app.callback(Output("userDropdown", "options"),
+              [Input("productDropdown", "value"),
+               Input("button-itemAll", "n_clicks"),
+               Input("button-item5", "n_clicks"),
+               Input("button-item4", "n_clicks"),
+               Input("button-item3", "n_clicks"),
+               Input("button-item2", "n_clicks"),
+               Input("button-item1", "n_clicks")])
+def update_user_list(product, all, five, four, three, two, one):
     if product is None:
         return dash.no_update
+    tierButton = dash.callback_context
     productLine = product.split(',')
     product_name = productLine[0]
-    return [o for o in userDropdown if product_name in o["value"]]
+    if tierButton.triggered and tierButton.triggered[0]['prop_id'] == "button-itemAll.n_clicks":
+        return [o for o in userDropdown if product_name in o['value'].split(',')[2]]
+    elif tierButton.triggered and tierButton.triggered[0]['prop_id'] == "button-item5.n_clicks":
+        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) >= 4]
+    elif tierButton.triggered and tierButton.triggered[0]['prop_id'] == "button-item4.n_clicks":
+        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) == 3]
+    elif tierButton.triggered and tierButton.triggered[0]['prop_id'] == "button-item3.n_clicks":
+        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) == 2]
+    elif tierButton.triggered and tierButton.triggered[0]['prop_id'] == "button-item2.n_clicks":
+        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) == 1 and "" not in o["value"].split(',')[4]]
+    elif tierButton.triggered and tierButton.triggered[0]['prop_id'] == "button-item1.n_clicks":
+        return [o for o in userDropdown if product_name in o["value"].split(',')[2] and int(o["value"].split(',')[3]) == 1 and "" in o["value"].split(',')[4]]
+    else:
+        return [o for o in userDropdown if product_name in o["value"].split(',')[2]]
 
 
 @app.callback([Output("user-text", "children"),
@@ -1404,36 +1458,32 @@ def update_user_list(product):
                Output("reviewText", "children"),
                ],
               [Input("userDropdown", "value"),
-               Input("productDropdown", "value")
+               Input("productDropdown", "value"),
+               Input("button-itemAll", "n_clicks"),
+               Input("button-item5", "n_clicks"),
+               Input("button-item4", "n_clicks"),
+               Input("button-item3", "n_clicks"),
+               Input("button-item2", "n_clicks"),
+               Input("button-item1", "n_clicks")
                ])
-def update_user_text(user, productDrop):
-    if previous.initialValue is True:
-        previous.initialValue = False
-        return [], '', ''
-    elif previous.product != productDrop:
-        previous.product = productDrop
-        return [], '', ''
+def update_user_text(user, productDrop, all, five, four, three, two, one):
+    tierButton = dash.callback_context
+    possibleButtons = ["button-itemAll.n_clicks", "button-item5.n_clicks", "button-item4.n_clicks", "button-item3.n_clicks",
+                       "button-item2.n_clicks", "button-item1.n_clicks"]
+    if tierButton.triggered and tierButton.triggered[0]['prop_id'] in possibleButtons:
+        return [], '', 'No User Selected'
+    elif previous.productState != productDrop:
+        previous.productState = productDrop
+        return [], '', 'No User Selected'
     elif user is None:
-        return [], '', ''
+        return [], '', 'No User Selected'
     else:
         userList = user.split(',')
         user_name = userList[0]
         user_id = userList[1]
-        review_num, yelp_since, elite, avg_star, date_rev, text, given, empty = "", "", "", "", "", "", "", ""
-        for i in mvpProductsDF.index.unique():
-            if mvpProductsDF.iloc[i]['user_id'] == user_id:
-                review_num = mvpProductsDF.iloc[i]['review_count_y']
-                yelp_since = mvpProductsDF.iloc[i]["yelping_since"]
-                if mvpProductsDF.iloc[i]["elite"] == '':
-                    elite = 'N/A'
-                else:
-                    elite = mvpProductsDF.iloc[i]["elite"]
-                avg_star = mvpProductsDF.iloc[i]["average_stars"]
-                given = mvpProductsDF.iloc[i]["stars_y"]
-                date_rev = mvpProductsDF.iloc[i]["date"]
-                text = mvpProductsDF.iloc[i]["text"]
-                break
-
+        user_info = getUserDataForCards(user_id, user_categories)
+        review_num, yelp_since, elite, avg_star = user_info[0], user_info[1], user_info[2], user_info[3]
+        given, date_rev, text = user_info[4], user_info[5], user_info[6]
         list_group = dbc.ListGroup(
             [
                 dbc.ListGroupItem("User ID: " + str(user_id)),
@@ -1477,11 +1527,12 @@ def update_product_text(product):
             dbc.ListGroupItem("Business ID: " + str(product_id)),
             dbc.ListGroupItem("Total Reviews: " + str(total_review)),
             dbc.ListGroupItem("Average Approval Rating: " + str(avg_stars)),
-            dbc.ListGroupItem("5 Star Users", id="button-item5", n_clicks=0, action=True),
-            dbc.ListGroupItem("4 Star Users", id="button-item4", n_clicks=0, action=True),
-            dbc.ListGroupItem("3 Star Users", id="button-item3", n_clicks=0, action=True),
-            dbc.ListGroupItem("2 Star Users", id="button-item2", n_clicks=0, action=True),
-            dbc.ListGroupItem("1 Star Users", id="button-item1", n_clicks=0, action=True),
+            dbc.ListGroupItem("All Users", id="button-itemAll", n_clicks=0, action=True),
+            dbc.ListGroupItem("4+ Year Elite Users", id="button-item5", n_clicks=0, action=True),
+            dbc.ListGroupItem("3 Year Elite Users", id="button-item4", n_clicks=0, action=True),
+            dbc.ListGroupItem("2 Year Elite Users", id="button-item3", n_clicks=0, action=True),
+            dbc.ListGroupItem("1 Year Elite Users", id="button-item2", n_clicks=0, action=True),
+            dbc.ListGroupItem("Not Elite Users", id="button-item1", n_clicks=0, action=True),
         ]
     )
     each_business = [list_group]

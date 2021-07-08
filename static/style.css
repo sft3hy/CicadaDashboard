@@ -18,7 +18,7 @@
 .reviewCard {
     float: left;
     clear: left;
-    margin-top: 30px;
+    margin-top: -30px;
     margin-left: 274px;
     margin-right: -500px;
 }
@@ -309,7 +309,7 @@
     clear: right;
     margin-right: 25px;
     margin-left: -400px;
-    margin-top: -695px;
+    margin-top: -745px;
 }
 
 .card-body {
