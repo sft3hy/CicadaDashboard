@@ -12,7 +12,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input, State
-# import requests
+import requests
 # from datetime import date
 from plotly.subplots import make_subplots
 # import re
@@ -23,7 +23,7 @@ import pickle
 
 # instagram dataframes
 instaNames = ["starbucks", "burgerking", "chickfila", "chipotle", "dunkin", "mcdonalds",
-              "panera", "popeyes", "qdoba", "tacobell", "wendys"]
+              "panerabread", "popeyes", "qdoba", "tacobell", "wendys"]
 newsNames = ["Starbucks", "Burger King", "Chick-fil-A", "Chipotle", "Dunkin'", "McDonald's", "Panera",
              "Popeyes", "Qdoba", "Taco Bell", "Wendy's"]
 socialMediaDFs = []
@@ -38,7 +38,7 @@ for n in instaNames:
 #     j = 1
 #     for ur in l.url:
 #         response = requests.get(ur)
-#         file = open("images/"+newsNames[i]+str(j)+".png", "wb")
+#         file = open("static/images/"+newsNames[i]+str(j)+".png", "wb")
 #         file.write(response.content)
 #         file.close()
 #         j+=1
@@ -406,16 +406,16 @@ def update_heatmap():
     username = "user"
     password = "RFofxtKVWVb4"
 
-    driver = webdriver.Chrome("/Users/samueltownsend/Downloads/chromedriver")
-
-    url = "http://50.17.183.33/clickheat/index.php"
-
-    driver.get(url)
-
-    driver.find_element_by_name("login").send_keys(username)
-    driver.find_element_by_name("pass").send_keys(password)
-    driver.find_element_by_css_selector("input[type=\"submit\" i]").click()
-    driver.find_element_by_id("divPanel").click()
+    # driver = webdriver.Chrome("/Users/samueltownsend/Downloads/chromedriver")
+    #
+    # url = "http://50.17.183.33/clickheat/index.php"
+    #
+    # driver.get(url)
+    #
+    # driver.find_element_by_name("login").send_keys(username)
+    # driver.find_element_by_name("pass").send_keys(password)
+    # driver.find_element_by_css_selector("input[type=\"submit\" i]").click()
+    # driver.find_element_by_id("divPanel").click()
 
 # update_heatmap()
 
@@ -692,8 +692,8 @@ def serve_layout():
                 id="dateRange",
                 clearable=True,
                 with_portal=True,
-                start_date="2021-06-06",
-                end_date="2021-07-06",
+                start_date="2021-06-08",
+                end_date="2021-07-08",
                 display_format="YYYY-MM-DD",
             ),
             dbc.Card(
