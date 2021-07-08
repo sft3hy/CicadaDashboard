@@ -12,7 +12,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash.dependencies import Output, Input, State
-# import requests
+import requests
 # from datetime import date
 from plotly.subplots import make_subplots
 # import re
@@ -38,7 +38,7 @@ for n in instaNames:
 #     j = 1
 #     for ur in l.url:
 #         response = requests.get(ur)
-#         file = open("images/"+newsNames[i]+str(j)+".png", "wb")
+#         file = open("static/images/"+newsNames[i]+str(j)+".png", "wb")
 #         file.write(response.content)
 #         file.close()
 #         j+=1
@@ -692,8 +692,8 @@ def serve_layout():
                 id="dateRange",
                 clearable=True,
                 with_portal=True,
-                start_date="2021-06-06",
-                end_date="2021-07-06",
+                start_date="2021-06-08",
+                end_date="2021-07-08",
                 display_format="YYYY-MM-DD",
             ),
             dbc.Card(
