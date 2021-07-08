@@ -1092,9 +1092,6 @@ class previous:
     productState = "Starbucks,q-9HgzoohzHAEu0VH37WiA"
     initialValue = True
     reviewCard = True
-    product_id = ""
-    total_review = ""
-    avg_stars = ""
 
 
 @app.callback(Output("review_card", "style"),
@@ -1108,7 +1105,6 @@ def display_value(value, userdropdown, productDrop):
         newDropVal = True
         previous.productState = productDrop
     if value == 6 and previous.reviewCard:
-        print('here')
         previous.reviewCard = False
         return {'display': 'none'}
     elif value == 6 and userdropdown and not newDropVal:
@@ -1141,27 +1137,28 @@ def makeNameVsReviewCount(state_chosen):
     [Input("userDropdown", "value"),
      Input("productDropdown", "value")])
 def makeUserMap(user_Chosen, productChosen):
-    if productChosen is None or user_Chosen is None:
+    if productChosen is None or user_Chosen is None or user_Chosen == '':
         return dash.no_update
-    productList = productChosen.split(',')
-    product_name = productList[0]
-    userList = user_Chosen.split(',')
-    user_name = userList[0]
-    user_id = userList[1]
-    productData = mvpProductsDF[mvpProductsDF["name_y"] == user_name]
-    productData = mvpProductsDF[mvpProductsDF['user_id'] == user_id]
-    productData = mvpProductsDF[mvpProductsDF["name_x"] == product_name]
-    userMapFill = px.scatter_mapbox(productData, lat="latitude", lon="longitude", hover_name="name_x",
-                           hover_data=["stars_y", "review_count_x"],
-                           color="stars_x", zoom=4, height=500, title="Individual Products", labels={
-            "stars_y": "Stars", "review_count_x": "Review Count", "latitude": "Latitude",
-            "longitude": "Longitude"
-        })
-    userMapFill.update_layout(mapbox_style="open-street-map")
-    userMapFill.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    with open('userMapFill.pkl', 'wb') as output:
-        pickle.dump(userMapFill, output, pickle.HIGHEST_PROTOCOL)
-    return userMapFill
+    else:
+        productList = productChosen.split(',')
+        product_name = productList[0]
+        userList = user_Chosen.split(',')
+        user_name = userList[0]
+        user_id = userList[1]
+        productData = mvpProductsDF[mvpProductsDF["name_y"] == user_name]
+        productData = mvpProductsDF[mvpProductsDF['user_id'] == user_id]
+        productData = mvpProductsDF[mvpProductsDF["name_x"] == product_name]
+        userMapFill = px.scatter_mapbox(productData, lat="latitude", lon="longitude", hover_name="name_x",
+                               hover_data=["stars_y", "review_count_x"],
+                               color="stars_x", zoom=4, height=500, title="Individual Products", labels={
+                "stars_y": "Stars", "review_count_x": "Review Count", "latitude": "Latitude",
+                "longitude": "Longitude"
+            })
+        userMapFill.update_layout(mapbox_style="open-street-map")
+        userMapFill.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+        with open('userMapFill.pkl', 'wb') as output:
+            pickle.dump(userMapFill, output, pickle.HIGHEST_PROTOCOL)
+        return userMapFill
 
 
 @app.callback(
@@ -1532,9 +1529,9 @@ def update_product_text(product):
         return '', ''
     productList = product.split(',')
     product_name = productList[0]
-    previous.product_id = productList[1]
-    previous.total_review = ""
-    previous.avg_stars = ""
+    product_id = productList[1]
+    total_review = ""
+    avg_stars = ""
     for i in mvpProductsDF.index.unique():
         if mvpProductsDF.iloc[i]['name_x'] == product_name:
             total_review = mvpProductsDF.iloc[i]["review_count_x"]
@@ -1542,9 +1539,9 @@ def update_product_text(product):
             break
     list_group = dbc.ListGroup(
         [
-            dbc.ListGroupItem("Business ID: " + str(previous.product_id)),
-            dbc.ListGroupItem("Total Reviews: " + str(previous.total_review)),
-            dbc.ListGroupItem("Average Approval Rating: " + str(previous.avg_stars)),
+            dbc.ListGroupItem("Business ID: " + str(product_id)),
+            dbc.ListGroupItem("Total Reviews: " + str(total_review)),
+            dbc.ListGroupItem("Average Approval Rating: " + str(avg_stars)),
             dbc.ListGroupItem("All Users", id="button-itemAll", n_clicks=0, action=True, active=False),
             dbc.ListGroupItem("4+ Year Elite Users", id="button-item5", n_clicks=0, action=True, active=False),
             dbc.ListGroupItem("3 Year Elite Users", id="button-item4", n_clicks=0, action=True, active=False),
