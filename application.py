@@ -23,7 +23,7 @@ import pickle
 
 # instagram dataframes
 instaNames = ["starbucks", "burgerking", "chickfila", "chipotle", "dunkin", "mcdonalds",
-              "panera", "popeyes", "qdoba", "tacobell", "wendys"]
+              "panerabread", "popeyes", "qdoba", "tacobell", "wendys"]
 newsNames = ["Starbucks", "Burger King", "Chick-fil-A", "Chipotle", "Dunkin'", "McDonald's", "Panera",
              "Popeyes", "Qdoba", "Taco Bell", "Wendy's"]
 socialMediaDFs = []

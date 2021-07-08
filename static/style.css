@@ -13,7 +13,7 @@
     margin-top: 40px;
     margin-left: 274px;
     margin-right: -500px;
-    margin-bottom: -500px;
+    margin-bottom: -800px;
 }
 
 .reviewCard {
@@ -339,7 +339,6 @@
 
 .IGFeed {
     margin-left: 510px;
-    margin-top: -385px;
     float: left;
     clear: left;
     font-size: 30px;
