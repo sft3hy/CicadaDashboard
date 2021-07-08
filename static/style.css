@@ -26,7 +26,7 @@
 .fileButton {
     margin-right: -200px;
     margin-left: 40px;
-    margin-top: -250px;
+    margin-top: -230px;
     clear: left;
     float: left;
 }
@@ -89,7 +89,7 @@
     /*margin-right: 60px;*/
     margin-left: 30px;
     text-align: left;
-    margin-bottom: -150px;
+    margin-bottom: -130px;
     margin-top: 30px;
 }
 
@@ -185,7 +185,7 @@
     margin-left: 20px;
     font-size: 20px;
     text-align: center;
-    margin-bottom: -60px;
+    margin-bottom: 20px;
 }
 
 .NRO {
@@ -199,12 +199,26 @@
 }
 
 .LiveData {
-    margin-top: 500px;
-    margin-left: -200px
+    margin-top: -150px;
+    margin-left: -170px;
 }
+
+.loadHeatButton {
+    float: right;
+    clear: right;
+    margin-top: -200px;
+    margin-right: 180px;
+}
+
 .liveUserMap {
-    margin-left: 500px;
-    margin-top: -300px;
+    clear: right;
+    float: right;
+    margin-right: 270px;
+    margin-left: -500px;
+}
+
+.text.gtitle {
+    margin-top: -50px;
 }
 
 .heatmapLogin {
@@ -350,9 +364,9 @@
 }
 
 .LiveData {
-    margin-left: 400px;
-    margin-top: 50px;
-    text-align: center;
+    margin-left: 300px;
+    float: left;
+    clear: left;
 }
 
 .menu {
@@ -375,12 +389,10 @@
 
 .Select--single > .Select-control .Select-value, .Select-placeholder {
     line-height: 48px;
-
 }
 
 .Select--multi .Select-value-label {
     line-height: 32px;
     margin-top: 20px;
-
 }
 
