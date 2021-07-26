@@ -355,6 +355,17 @@ for r in newsDF.restaurant.unique():
     dropDownRestaurants.append({"label": r, 'value': r})
 correct_img = ""
 
+restaurantsList2 = ['Starbucks', 'Burger King', 'Chick-fil-A', 'Chipotle',
+                   'Dunkin\'', 'McDonald\'s', 'Panera', 'Popeyes', 'QDOBA',
+                   'Taco Bell', 'Wendy\'s']
+reverseReplacements = {'Chipotle': 'Chipotle Mexican Grill', 'QDOBA': 'QDOBA Mexican Eats', 'Popeyes': 'Popeyes Louisiana Kitchen', 'Panera': 'Panera Bread'}
+summaryStatsDropdown = []
+for name in restaurantsList2:
+    if name in reverseReplacements:
+        summaryStatsDropdown.append({"label": name, 'value': reverseReplacements[name]})
+    else:
+        summaryStatsDropdown.append({"label": name, 'value': name})
+
 # with open("selectedTrackingData.json", encoding="UTF-8") as f:
 #     tracking = json.load(f)
 
@@ -656,7 +667,7 @@ def serve_layout():
         html.Div([
             dcc.Dropdown(
                     id='restaurantDropdown1',
-                    options=dropDownRestaurants,
+                    options=summaryStatsDropdown,
                     value='Starbucks',
                     className="starsDropdown1",
                 ),
@@ -664,7 +675,7 @@ def serve_layout():
         html.Div([
             dcc.Dropdown(
                     id='restaurantDropdown2',
-                    options=dropDownRestaurants,
+                    options=summaryStatsDropdown,
                     value='Chick-fil-A',
                     className="starsDropdown2",
                 ),
