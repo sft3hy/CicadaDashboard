@@ -488,6 +488,7 @@ def generateLiveData():
 # the main meat of the display, all in this weird html/python hybrid (it's how dash works)
 def serve_layout():
     return html.Div(
+        id='main-layout',
     children=[
         # Header of Dashboard
         html.Div(
@@ -829,7 +830,54 @@ def serve_layout():
     className="background"
 )
 
-app.layout = serve_layout
+# Sets the app layout to be the opening page
+app.layout = html.Div([
+    dcc.Location(id='url', refresh=False),
+    dcc.Interval(
+                id='interval-component',
+                interval=3000, # in milliseconds
+                max_intervals=1,
+                n_intervals=0,
+            ),
+    html.Div(id='page-content', children=[
+                 html.P(children="Welcome to CICADA", className="header-title", style={'margin-top': '20px'}),
+                 html.Div([
+                     html.Img(
+                         src="static/logo.png",
+                         sizes="small", className="cicada", style={"clear": "right", "float": "right"}
+                     )], className='grow'
+                 )
+            ])
+    ],
+    className='opening_background'
+)
+
+
+# Initiates variable main layout, which holds the layout of the app
+main_layout = serve_layout()
+
+
+# Change opening page layout to main layout
+@app.callback(dash.dependencies.Output('page-content', 'children'),
+              [dash.dependencies.Input('interval-component', 'n_intervals')],
+              prevent_initial_call=True)
+def display_value(interval):
+    if interval == 1:
+        return main_layout
+    else:
+        return dash.no_update
+
+
+# Disable interval once opening page has transitioned into main layout
+@app.callback(dash.dependencies.Output('interval-component', 'disabled'),
+              [dash.dependencies.Input('interval-component', 'n_intervals')],
+              prevent_initial_call=True)
+def display_value(interval):
+    if interval == 1:
+        return True
+    else:
+        return dash.no_update
+
 
 # make the web-app responsive (so when you click something, it responds)
 @app.callback(

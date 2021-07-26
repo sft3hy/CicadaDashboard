@@ -7,6 +7,97 @@
     margin-bottom: -40px;
 }
 
+.opening_background{
+    background-image: linear-gradient(#CDE6F3, #003D71);
+    height: 1600px;
+    margin-top: -20px;
+}
+
+.cicada {
+    float: top;
+    clear: top;
+    margin-bottom: -200px;
+    margin-top: 50px;
+    margin-right: 505px;
+    -webkit-animation-name: spin;
+    -webkit-animation-duration: 4000ms;
+    -webkit-animation-iteration-count: 4;
+    -webkit-animation-timing-function: linear;
+    -moz-animation-name: spin;
+    -moz-animation-duration: 4000ms;
+    -moz-animation-iteration-count: 4;
+    -moz-animation-timing-function: linear;
+    -ms-animation-name: spin;
+    -ms-animation-duration: 4000ms;
+    -ms-animation-iteration-count: 4;
+    -ms-animation-timing-function: linear;
+
+    animation-name: spin;
+    animation-duration: 400ms;
+    animation-iteration-count: 4;
+    animation-timing-function: linear;
+}
+@keyframes zoominsinglefeatured {
+    0% {
+        transform: scale(1);
+        transform-origin: top center;
+    }
+    100% {
+        transform: scale(100) translate(0px, -30vh);
+        transform-origin: top center;
+    }
+}
+@-ms-keyframes zoominsinglefeatured {
+    0% {-ms-transform: scale(1) ; -ms-transform-origin: top center;}
+    100% {-ms-transform: scale(100) translate(0px, -30vh); -ms-transform-origin: top center;}
+}
+@-moz-keyframes zoominsinglefeatured {
+    0% {-moz-transform: scale(1); -moz-transform-origin: top center;}
+    100% {-moz-transform: scale(100) translate(0px, -30vh); -moz-transform-origin: top center;}
+}
+@-webkit-keyframes zoominsinglefeatured {
+    0% {-webkit-transform: scale(1); -webkit-transform-origin: top center;}
+    100% {-webkit-transform: scale(100) translate(0px, -30vh); -webkit-transform-origin: top center;}
+}
+.grow{
+    animation: zoominsinglefeatured 2s;
+    animation-delay: 2s;
+    -ms-animation: zoominsinglefeatured 2s;
+    -ms-animation-delay: 2s;
+    -moz-animation: zoominsinglefeatured 2s;
+    -moz-animation-delay: 2s;
+    -webkit-animation: zoominsinglefeatured 2s;
+    -webkit-animation-delay: 2s;
+}
+@-ms-keyframes spin {
+    from { -ms-transform: rotate(0deg); }
+    to { -ms-transform: rotate(360deg); }
+}
+@-moz-keyframes spin {
+    from { -moz-transform: rotate(0deg); }
+    to { -moz-transform: rotate(360deg); }
+}
+@-webkit-keyframes spin {
+    from { -webkit-transform: rotate(0deg); }
+    to { -webkit-transform: rotate(360deg); }
+}
+@keyframes spin {
+    from {
+        transform:rotate(0deg);
+    }
+    to {
+        transform:rotate(360deg);
+    }
+}
+
+.link {
+    /*float: top;*/
+    /*clear: top;*/
+    border: 2px solid white;
+    text-align: center;
+    color: black;
+}
+
 .socialMediaCards {
     float: left;
     clear: left;
