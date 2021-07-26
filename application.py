@@ -20,6 +20,7 @@ import json
 from sampleData import AttributeData
 import os
 import pickle
+# hello
 
 # instagram dataframes
 instaNames = ["starbucks", "burgerking", "chickfila", "chipotle", "dunkin", "mcdonalds",
@@ -43,6 +44,8 @@ for n in instaNames:
 #         file.close()
 #         j+=1
 #     i+=1
+
+# hey
 
 if not os.path.exists("static/images"):
     os.mkdir("static/images")
@@ -406,16 +409,16 @@ def update_heatmap():
     username = "user"
     password = "RFofxtKVWVb4"
 
-    # driver = webdriver.Chrome("/Users/samueltownsend/Downloads/chromedriver")
-    #
-    # url = "http://50.17.183.33/clickheat/index.php"
-    #
-    # driver.get(url)
-    #
-    # driver.find_element_by_name("login").send_keys(username)
-    # driver.find_element_by_name("pass").send_keys(password)
-    # driver.find_element_by_css_selector("input[type=\"submit\" i]").click()
-    # driver.find_element_by_id("divPanel").click()
+    driver = webdriver.Chrome("/Users/samueltownsend/Downloads/chromedriver")
+
+    url = "http://50.17.183.33/clickheat/index.php"
+
+    driver.get(url)
+
+    driver.find_element_by_name("login").send_keys(username)
+    driver.find_element_by_name("pass").send_keys(password)
+    driver.find_element_by_css_selector("input[type=\"submit\" i]").click()
+    driver.find_element_by_id("divPanel").click()
 
 # update_heatmap()
 
@@ -693,8 +696,8 @@ def serve_layout():
                 id="dateRange",
                 clearable=True,
                 with_portal=True,
-                start_date="2021-06-08",
-                end_date="2021-07-08",
+                start_date="2021-06-13",
+                end_date="2021-07-13",
                 display_format="YYYY-MM-DD",
             ),
             dbc.Card(
